@@ -1,0 +1,16 @@
+{
+  "name": "jeyroik/deflou-api",
+  "description": "API package for DeFlou",
+  "require": {
+    "jeyroik/extas-base": "*",
+    "jeyroik/extas-installer": "*",
+    "jeyroik/extas-jsonrpc": "*",
+    "jeyroik/deflou-core": "*",
+    "jeyroik/deflou-enrichments": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "deflou\\": "src/"
+    }
+  }
+}
