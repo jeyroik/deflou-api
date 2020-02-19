@@ -1,0 +1,57 @@
+{
+  "name": "deflou/core",
+  "package_classes": [
+    {
+      "interface": "deflou\\interfaces\\applications\\activities\\IActivitySampleRepository",
+      "class": "deflou\\components\\applications\\activities\\ActivitySampleRepository"
+    }
+  ],
+  "plugins": [
+    {
+      "class": "deflou\\components\\plugins\\api\\PluginRestTriggerRunRoute",
+      "stage": "extas.jsonrpc.init"
+    }
+  ],
+  "jsonrpc_operations": [
+    {
+      "name": "event.create",
+      "title": "Create event",
+      "description": "Create new event (request) from an application",
+      "method": "create",
+      "item_name": "",
+      "item_class": "",
+      "item_repo": "",
+      "filter_class": "extas\\components\\jsonrpc\\operations\\filters\\FilterDefault",
+      "class": "deflou\\components\\jsonrpc\\operations\\CreateEvent",
+      "spec": {
+        "request": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "object",
+              "properties": {
+                "event_name": {
+                  "type": "string"
+                },
+                "event_data": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "event_name": {
+              "type": "string"
+            },
+            "event_result": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
