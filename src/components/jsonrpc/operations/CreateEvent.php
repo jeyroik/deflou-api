@@ -6,6 +6,7 @@ use deflou\interfaces\applications\anchors\IAnchor;
 use deflou\interfaces\applications\anchors\IAnchorRepository;
 use deflou\interfaces\triggers\ITrigger;
 use deflou\interfaces\triggers\ITriggerRepository;
+use deflou\interfaces\triggers\ITriggerResponse;
 use extas\components\jsonrpc\operations\OperationDispatcher;
 use extas\components\SystemContainer;
 use extas\interfaces\jsonrpc\IRequest;
@@ -47,7 +48,12 @@ class CreateEvent extends OperationDispatcher implements IOperationCreate
                         $this->enrichTrigger($trigger, $event);
                         $action = $trigger->getAction();
                         $dispatcher = $action->buildClassWithParameters();
-                        $dispatcher($trigger, $event, $responseData);
+                        /**
+                         * @var $response ITriggerResponse
+                         */
+                        $response = $dispatcher($trigger, $event);
+                        $responseData[$trigger->getName()] = $response->__toArray();
+                        $this->commitTrigger($anchor, $trigger, $response);
                     }
                 }
                 $response->success($responseData);
@@ -56,6 +62,18 @@ class CreateEvent extends OperationDispatcher implements IOperationCreate
             }
         } else {
             $response->error('Unknown anchor "' . $anchorId . '"', 400);
+        }
+    }
+
+    /**
+     * @param IAnchor $anchor
+     * @param ITrigger $trigger
+     * @param ITriggerResponse $response
+     */
+    protected function commitTrigger(IAnchor $anchor, ITrigger $trigger, ITriggerResponse $response)
+    {
+        foreach ($this->getPluginsByStage('deflou.trigger.commit') as $plugin) {
+            $plugin($trigger, $response);
         }
     }
 
