@@ -24,19 +24,21 @@
       "filter_class": "extas\\components\\jsonrpc\\operations\\filters\\FilterDefault",
       "class": "deflou\\components\\jsonrpc\\operations\\CreateEvent",
       "spec": {
+        "endpoint": "@basePath/api/jsonrpc",
         "request": {
           "type": "object",
           "properties": {
             "data": {
               "type": "object",
               "properties": {
-                "event_name": {
+                "anchor": {
                   "type": "string"
                 },
                 "event_data": {
                   "type": "object"
                 }
-              }
+              },
+              "required": ["anchor"]
             }
           }
         },
