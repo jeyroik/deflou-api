@@ -16,7 +16,7 @@ use extas\components\plugins\Plugin;
  */
 class PluginLaunchedWithException extends Plugin implements IStageDeflouTriggerLaunched
 {
-    public const EXCEPTION__MESSAGE = 'Worked';
+    public const EXCEPTION__MESSAGE = 'Worked launched';
 
     /**
      * @param IActivity $action

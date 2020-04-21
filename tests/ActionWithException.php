@@ -15,7 +15,7 @@ use deflou\interfaces\triggers\ITriggerResponse;
  */
 class ActionWithException extends TriggerAction
 {
-    public const EXCEPTION__MESSAGE = 'Worked';
+    public const EXCEPTION__MESSAGE = 'Worked action';
 
     /**
      * @param IActivity $action

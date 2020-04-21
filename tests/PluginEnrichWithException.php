@@ -14,7 +14,7 @@ use extas\components\plugins\Plugin;
  */
 class PluginEnrichWithException extends Plugin implements IStageDeFlouTriggerEnrich
 {
-    public const EXCEPTION__MESSAGE = 'Worked';
+    public const EXCEPTION__MESSAGE = 'Worked enrich';
 
     /**
      * @param IActivity $action
