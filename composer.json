@@ -5,11 +5,21 @@
     "jeyroik/extas-installer": "2.*",
     "jeyroik/extas-jsonrpc": "1.*",
     "jeyroik/deflou-core": "0.*",
-    "jeyroik/deflou-enrichments": "0.*"
+    "jeyroik/deflou-enrichments": "0.*",
+    "ramsey/uuid": "4.*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9",
+    "vlucas/phpdotenv": "^3.4",
+    "phpstan/phpstan": "0.*"
   },
   "autoload": {
     "psr-4": {
       "deflou\\": "src/"
     }
+  },
+  "scripts": {
+    "test": "vendor/bin/phpunit --testdox --coverage-clover=coverage.xml --whitelist=src tests",
+    "stan": "vendor/bin/phpstan analyse -l 5 src"
   }
 }

@@ -34,7 +34,7 @@ class PluginEnrichTrigger extends Plugin
             foreach ($parameters as $parameter) {
                 $value = $enrichment->enrich(
                     $parameter->getValue(),
-                    $trigger->getOwner(),
+                    $trigger->getPlayer(),
                     $event->getParametersValues()
                 );
                 $trigger->setParameterValue($parameter->getName(), $value);
