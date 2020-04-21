@@ -513,7 +513,7 @@ class CreateEventTest extends TestCase
         $this->condRepo->create(new Condition([
             Condition::FIELD__NAME => 'eq',
             Condition::FIELD__ALIASES => ['eq', '='],
-            Condition::FIELD__CLASS => ConditionEqual::FIELD__CLASS
+            Condition::FIELD__CLASS => ConditionEqual::class
         ]));
 
         $this->extRepo->create(new Extension([
