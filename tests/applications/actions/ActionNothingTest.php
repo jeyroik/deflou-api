@@ -7,7 +7,10 @@ use deflou\components\applications\anchors\Anchor;
 use deflou\components\applications\Application;
 use deflou\components\applications\ApplicationRepository;
 use deflou\components\triggers\Trigger;
+use deflou\components\triggers\TriggerResponse;
+use deflou\components\triggers\TriggerResponseRepository;
 use deflou\interfaces\applications\IApplicationRepository;
+use deflou\interfaces\triggers\ITriggerResponseRepository;
 use Dotenv\Dotenv;
 use extas\components\SystemContainer;
 use extas\interfaces\repositories\IRepository;
@@ -22,6 +25,7 @@ use PHPUnit\Framework\TestCase;
 class ActionNothingTest extends TestCase
 {
     protected ?IRepository $appRepo = null;
+    protected ?IRepository $triggersResponsesRepo = null;
 
     protected function setUp(): void
     {
@@ -35,11 +39,17 @@ class ActionNothingTest extends TestCase
             IApplicationRepository::class,
             ApplicationRepository::class
         );
+
+        SystemContainer::addItem(
+            ITriggerResponseRepository::class,
+            TriggerResponseRepository::class
+        );
     }
 
     public function tearDown(): void
     {
         $this->appRepo->delete([Application::FIELD__SAMPLE_NAME => 'test_app']);
+        $this->triggersResponsesRepo->delete([TriggerResponse::FIELD__PLAYER_NAME => 'test_player']);
     }
 
     public function testTriggering()
@@ -67,7 +77,7 @@ class ActionNothingTest extends TestCase
                 Trigger::FIELD__NAME => 'test'
             ]),
             new Anchor([
-                Anchor::FIELD__PLAYER_NAME => 'test'
+                Anchor::FIELD__PLAYER_NAME => 'test_player'
             ])
         );
         $this->assertEquals('Nothing is done', $response->getResponseBody());
