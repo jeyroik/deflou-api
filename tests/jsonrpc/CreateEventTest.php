@@ -124,6 +124,7 @@ class CreateEventTest extends TestCase
         $this->appRepo->delete([Application::FIELD__SAMPLE_NAME => 'test_app']);
         $this->activityRepo->delete([Activity::FIELD__NAME => ['test_event', 'test_action']]);
         $this->playerRepo->delete([Player::FIELD__NAME => 'test']);
+        $this->triggerRepo->delete([ITrigger::FIELD__NAME => 'test']);
         $this->triggersResponsesRepo->delete([TriggerResponse::FIELD__PLAYER_NAME => 'test_player']);
         $this->pluginRepo->delete([Plugin::FIELD__STAGE => 'extas.triggers_responses.create.before']);
     }
