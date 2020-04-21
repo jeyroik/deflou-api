@@ -565,11 +565,6 @@ class CreateEventTest extends TestCase
             Trigger::FIELD__EVENT_PARAMETERS => []
         ]));
 
-        $this->pluginRepo->create(new Plugin([
-            Plugin::FIELD__CLASS => PluginEnrich::class,
-            Plugin::FIELD__STAGE => IStageDeFlouTriggerEnrich::NAME
-        ]));
-
         $operation($serverRequest, $serverResponse);
 
         $jsonRpcResponse = $this->getJsonRpcResponse($serverResponse);
