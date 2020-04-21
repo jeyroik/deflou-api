@@ -337,7 +337,7 @@ class CreateEventTest extends TestCase
         $this->triggerRepo->create(new Trigger([
             Trigger::FIELD__NAME => 'test',
             Trigger::FIELD__EVENT_NAME => 'test_event',
-            Trigger::FIELD__PARAMETERS => [
+            Trigger::FIELD__EVENT_PARAMETERS => [
                 'test' => [
                     ISampleParameter::FIELD__NAME => 'test'
                 ]
@@ -380,7 +380,7 @@ class CreateEventTest extends TestCase
             Trigger::FIELD__NAME => 'test',
             Trigger::FIELD__EVENT_NAME => 'test_event',
             Trigger::FIELD__PLAYER_NAME => 'test_player',
-            Trigger::FIELD__PARAMETERS => [
+            Trigger::FIELD__EVENT_PARAMETERS => [
                 'test' => [
                     ISampleParameter::FIELD__NAME => 'test'
                 ]
@@ -420,7 +420,7 @@ class CreateEventTest extends TestCase
 
         $this->triggerRepo->create(new Trigger([
             Trigger::FIELD__NAME => 'test',
-            Trigger::FIELD__PARAMETERS => [
+            Trigger::FIELD__EVENT_PARAMETERS => [
                 'test' => [
                     ISampleParameter::FIELD__NAME => 'test'
                 ]
@@ -461,7 +461,7 @@ class CreateEventTest extends TestCase
         $this->triggerRepo->create(new Trigger([
             Trigger::FIELD__NAME => 'test',
             Trigger::FIELD__ACTION_NAME => 'unknown',
-            Trigger::FIELD__PARAMETERS => []
+            Trigger::FIELD__EVENT_PARAMETERS => []
         ]));
 
         $operation($serverRequest, $serverResponse);
@@ -504,7 +504,7 @@ class CreateEventTest extends TestCase
         $this->triggerRepo->create(new Trigger([
             Trigger::FIELD__NAME => 'test',
             Trigger::FIELD__ACTION_NAME => 'test_action',
-            Trigger::FIELD__PARAMETERS => []
+            Trigger::FIELD__EVENT_PARAMETERS => []
         ]));
 
         $this->pluginRepo->create(new Plugin([
@@ -552,7 +552,7 @@ class CreateEventTest extends TestCase
         $this->triggerRepo->create(new Trigger([
             Trigger::FIELD__NAME => 'test',
             Trigger::FIELD__ACTION_NAME => 'test_action',
-            Trigger::FIELD__PARAMETERS => []
+            Trigger::FIELD__EVENT_PARAMETERS => []
         ]));
 
         $this->pluginRepo->create(new Plugin([
@@ -600,7 +600,7 @@ class CreateEventTest extends TestCase
         $this->triggerRepo->create(new Trigger([
             Trigger::FIELD__NAME => 'test',
             Trigger::FIELD__ACTION_NAME => 'test_action',
-            Trigger::FIELD__PARAMETERS => []
+            Trigger::FIELD__EVENT_PARAMETERS => []
         ]));
 
         $this->pluginRepo->create(new Plugin([
@@ -648,7 +648,7 @@ class CreateEventTest extends TestCase
         $this->triggerRepo->create(new Trigger([
             Trigger::FIELD__NAME => 'test',
             Trigger::FIELD__ACTION_NAME => 'test_action',
-            Trigger::FIELD__PARAMETERS => []
+            Trigger::FIELD__EVENT_PARAMETERS => []
         ]));
 
         $operation($serverRequest, $serverResponse);
