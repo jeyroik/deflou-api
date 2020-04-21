@@ -408,6 +408,7 @@ class CreateEventTest extends TestCase
 
         $this->anchorRepo->create(new Anchor([
             Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
             Anchor::FIELD__TRIGGER_NAME => 'test',
             Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
         ]));
@@ -448,6 +449,7 @@ class CreateEventTest extends TestCase
 
         $this->anchorRepo->create(new Anchor([
             Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
             Anchor::FIELD__TRIGGER_NAME => 'test',
             Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
         ]));
@@ -485,6 +487,7 @@ class CreateEventTest extends TestCase
 
         $this->anchorRepo->create(new Anchor([
             Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
             Anchor::FIELD__TRIGGER_NAME => 'test',
             Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
         ]));
@@ -533,6 +536,7 @@ class CreateEventTest extends TestCase
 
         $this->anchorRepo->create(new Anchor([
             Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
             Anchor::FIELD__TRIGGER_NAME => 'test',
             Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
         ]));
@@ -581,6 +585,7 @@ class CreateEventTest extends TestCase
 
         $this->anchorRepo->create(new Anchor([
             Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
             Anchor::FIELD__TRIGGER_NAME => 'test',
             Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
         ]));
@@ -629,6 +634,7 @@ class CreateEventTest extends TestCase
 
         $this->anchorRepo->create(new Anchor([
             Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
             Anchor::FIELD__TRIGGER_NAME => 'test',
             Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
         ]));
