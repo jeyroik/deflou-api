@@ -594,6 +594,11 @@ class CreateEventTest extends TestCase
         $serverRequest = $this->getServerRequest();
         $serverResponse = $this->getServerResponse();
 
+        $this->appRepo->create(new Application([
+            Application::FIELD__NAME => 'test_app',
+            Application::FIELD__SAMPLE_NAME => 'test'
+        ]));
+
         $this->anchorRepo->create(new Anchor([
             Anchor::FIELD__ID => 'test',
             Anchor::FIELD__EVENT_NAME => 'test_event',
@@ -604,12 +609,14 @@ class CreateEventTest extends TestCase
         $this->activityRepo->create(new Activity([
             Activity::FIELD__NAME => 'test_event',
             Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__APPLICATION_NAME => 'test_app',
             Activity::FIELD__CLASS => EventNothing::class
         ]));
 
         $this->activityRepo->create(new Activity([
             Activity::FIELD__NAME => 'test_action',
             Activity::FIELD__TYPE => Activity::TYPE__ACTION,
+            Activity::FIELD__APPLICATION_NAME => 'test_app',
             Activity::FIELD__CLASS => ActionNothing::class
         ]));
 
