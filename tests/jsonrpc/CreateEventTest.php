@@ -654,7 +654,7 @@ class CreateEventTest extends TestCase
         $this->activityRepo->create(new Activity([
             Activity::FIELD__NAME => 'test_action',
             Activity::FIELD__TYPE => Activity::TYPE__ACTION,
-            Activity::FIELD__CLASS => ActionWithException::class
+            Activity::FIELD__CLASS => ActionNothing::class
         ]));
 
         $this->triggerRepo->create(new Trigger([
