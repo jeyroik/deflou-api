@@ -34,6 +34,7 @@ class ActionNothingTest extends TestCase
         $env->load();
 
         $this->appRepo = new ApplicationRepository();
+        $this->triggersResponsesRepo = new TriggerResponseRepository();
 
         SystemContainer::addItem(
             IApplicationRepository::class,
