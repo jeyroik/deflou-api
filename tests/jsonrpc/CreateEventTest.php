@@ -50,7 +50,6 @@ use extas\interfaces\samples\parameters\ISampleParameter;
 use PHPUnit\Framework\TestCase;
 use Slim\Http\Response as PsrResponse;
 use tests\ActionWithException;
-use tests\PluginEnrich;
 use tests\PluginEnrichWithException;
 use tests\PluginLaunchedWithException;
 
@@ -81,7 +80,17 @@ class CreateEventTest extends TestCase
         $this->activityRepo = new ActivityRepository();
         $this->playerRepo = new PlayerRepository();
         $this->triggersResponsesRepo = new TriggerResponseRepository();
-        $this->pluginRepo = new PluginRepository();
+        $this->pluginRepo = new class extends PluginRepository {
+            public function reload()
+            {
+                parent::$stagesWithPlugins = [];
+            }
+
+            public function getStageWithPlugins(): array
+            {
+                return static::$stagesWithPlugins;
+            }
+        };
         $this->triggerRepo = new TriggerRepository();
 
         SystemContainer::addItem(
@@ -128,7 +137,6 @@ class CreateEventTest extends TestCase
         $this->triggersResponsesRepo->delete([TriggerResponse::FIELD__PLAYER_NAME => 'test_player']);
         $this->pluginRepo->delete([
             Plugin::FIELD__CLASS => [
-                PluginEnrich::class,
                 PluginEnrichWithException::class,
                 PluginLaunchedWithException::class
             ]
@@ -565,6 +573,8 @@ class CreateEventTest extends TestCase
             Trigger::FIELD__EVENT_PARAMETERS => []
         ]));
 
+        $this->pluginRepo->reload();
+
         $operation($serverRequest, $serverResponse);
 
         $jsonRpcResponse = $this->getJsonRpcResponse($serverResponse);
@@ -614,6 +624,7 @@ class CreateEventTest extends TestCase
             Plugin::FIELD__STAGE => IStageDeflouTriggerLaunched::NAME
         ]));
 
+        $this->pluginRepo->reload();
         $operation($serverRequest, $serverResponse);
 
         $jsonRpcResponse = $this->getJsonRpcResponse($serverResponse);
@@ -622,7 +633,7 @@ class CreateEventTest extends TestCase
         $response = $this->getResponseData($jsonRpcResponse);
         $response[IResponse::RESPONSE__ERROR] = $this->getError(
             400,
-            ActionWithException::EXCEPTION__MESSAGE
+            PluginLaunchedWithException::EXCEPTION__MESSAGE
         );
         $this->assertEquals($response, $this->decodeRpcResponse($jsonRpcResponse));
     }
@@ -658,6 +669,7 @@ class CreateEventTest extends TestCase
             Trigger::FIELD__EVENT_PARAMETERS => []
         ]));
 
+        $this->pluginRepo->reload();
         $operation($serverRequest, $serverResponse);
 
         $jsonRpcResponse = $this->getJsonRpcResponse($serverResponse);
