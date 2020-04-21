@@ -31,6 +31,9 @@ use deflou\interfaces\triggers\ITrigger;
 use deflou\interfaces\triggers\ITriggerRepository;
 use deflou\interfaces\triggers\ITriggerResponseRepository;
 use Dotenv\Dotenv;
+use extas\components\conditions\Condition;
+use extas\components\conditions\ConditionEqual;
+use extas\components\conditions\ConditionRepository;
 use extas\components\jsonrpc\Request;
 use extas\components\jsonrpc\Response;
 use extas\components\players\Player;
@@ -40,6 +43,9 @@ use extas\components\plugins\PluginRepository;
 use extas\components\servers\requests\ServerRequest;
 use extas\components\servers\responses\ServerResponse;
 use extas\components\SystemContainer;
+use extas\interfaces\conditions\ICondition;
+use extas\interfaces\conditions\IConditionRepository;
+use extas\interfaces\conditions\IHasCondition;
 use extas\interfaces\jsonrpc\IRequest;
 use extas\interfaces\jsonrpc\IResponse;
 use extas\interfaces\jsonrpc\operations\IOperationDispatcher;
@@ -68,6 +74,7 @@ class CreateEventTest extends TestCase
     protected ?IRepository $triggerRepo = null;
     protected ?IRepository $pluginRepo = null;
     protected ?IRepository $triggersResponsesRepo = null;
+    protected ?IRepository $condRepo = null;
 
     protected function setUp(): void
     {
@@ -92,7 +99,12 @@ class CreateEventTest extends TestCase
             }
         };
         $this->triggerRepo = new TriggerRepository();
+        $this->condRepo = new ConditionRepository();
 
+        SystemContainer::addItem(
+            IConditionRepository::class,
+            ConditionRepository::class
+        );
         SystemContainer::addItem(
             IAnchorRepository::class,
             AnchorRepository::class
@@ -141,6 +153,7 @@ class CreateEventTest extends TestCase
                 PluginLaunchedWithException::class
             ]
         ]);
+        $this->condRepo->delete([ICondition::FIELD__NAME => 'eq']);
     }
 
     protected function getServerRequest(array $params = [])
@@ -455,6 +468,60 @@ class CreateEventTest extends TestCase
         $this->assertEquals($response, $this->decodeRpcResponse($jsonRpcResponse));
     }
 
+    public function testEventConditionFailed()
+    {
+        $operation = $this->getOperation();
+        $serverRequest = $this->getServerRequest([
+            'data' => [
+                CreateEvent::REQUEST__ANCHOR => 'test',
+                'test' => 5
+            ]
+        ]);
+        $serverResponse = $this->getServerResponse();
+
+        $this->anchorRepo->create(new Anchor([
+            Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
+            Anchor::FIELD__TRIGGER_NAME => 'test',
+            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
+        ]));
+
+        $this->activityRepo->create(new Activity([
+            Activity::FIELD__NAME => 'test_event',
+            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__CLASS => EventNothing::class
+        ]));
+
+        $this->triggerRepo->create(new Trigger([
+            Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__EVENT_PARAMETERS => [
+                'test' => [
+                    ISampleParameter::FIELD__NAME => 'test',
+                    IHasCondition::FIELD__CONDITION => '=',
+                    IHasCondition::FIELD__VALUE => 6
+                ]
+            ]
+        ]));
+
+        $this->condRepo->create(new Condition([
+            Condition::FIELD__NAME => 'eq',
+            Condition::FIELD__ALIASES => ['eq', '='],
+            Condition::FIELD__CLASS => ConditionEqual::FIELD__CLASS
+        ]));
+
+        $operation($serverRequest, $serverResponse);
+
+        $jsonRpcResponse = $this->getJsonRpcResponse($serverResponse);
+        $this->assertTrue($jsonRpcResponse->hasError());
+
+        $response = $this->getResponseData($jsonRpcResponse);
+        $response[IResponse::RESPONSE__ERROR] = $this->getError(
+            400,
+            'Not applicable trigger "test"'
+        );
+        $this->assertEquals($response, $this->decodeRpcResponse($jsonRpcResponse));
+    }
+
     public function testMissedAction()
     {
         $operation = $this->getOperation();
@@ -648,7 +715,12 @@ class CreateEventTest extends TestCase
     public function testEverythingIsOk()
     {
         $operation = $this->getOperation();
-        $serverRequest = $this->getServerRequest();
+        $serverRequest = $this->getServerRequest([
+            'data' => [
+                CreateEvent::REQUEST__ANCHOR => 'test',
+                'test' => 5
+            ]
+        ]);
         $serverResponse = $this->getServerResponse();
 
         $this->appRepo->create(new Application([
@@ -680,7 +752,19 @@ class CreateEventTest extends TestCase
         $this->triggerRepo->create(new Trigger([
             Trigger::FIELD__NAME => 'test',
             Trigger::FIELD__ACTION_NAME => 'test_action',
-            Trigger::FIELD__EVENT_PARAMETERS => []
+            Trigger::FIELD__EVENT_PARAMETERS => [
+                'test' => [
+                    ISampleParameter::FIELD__NAME => 'test',
+                    IHasCondition::FIELD__CONDITION => '=',
+                    IHasCondition::FIELD__VALUE => 5
+                ]
+            ]
+        ]));
+
+        $this->condRepo->create(new Condition([
+            Condition::FIELD__NAME => 'eq',
+            Condition::FIELD__CLASS => ConditionEqual::class,
+            Condition::FIELD__ALIASES => ['eq', '=']
         ]));
 
         $this->pluginRepo->reload();
