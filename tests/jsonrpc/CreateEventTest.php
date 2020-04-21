@@ -516,6 +516,15 @@ class CreateEventTest extends TestCase
             Condition::FIELD__CLASS => ConditionEqual::FIELD__CLASS
         ]));
 
+        $this->extRepo->create(new Extension([
+            Extension::FIELD__CLASS => ExtensionHasCondition::class,
+            Extension::FIELD__INTERFACE => IExtensionHasCondition::class,
+            Extension::FIELD__METHODS => [
+                "isConditionTrue", "getCondition", "getConditionName", "setConditionName"
+            ],
+            Extension::FIELD__SUBJECT => 'extas.sample.parameter'
+        ]));
+
         $operation($serverRequest, $serverResponse);
 
         $jsonRpcResponse = $this->getJsonRpcResponse($serverResponse);
