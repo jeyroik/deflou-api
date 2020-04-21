@@ -114,6 +114,7 @@ class CreateEvent extends OperationDispatcher implements IOperationCreate
          * @var ITriggerEvent $eventDispatcher
          */
         $event = $anchor->getEvent(true);
+        $event->setParametersValues($data);
         $eventDispatcher = $event->buildClassWithParameters($data);
 
         return $eventDispatcher($event, $anchor);
