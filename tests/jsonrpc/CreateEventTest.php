@@ -34,6 +34,9 @@ use Dotenv\Dotenv;
 use extas\components\conditions\Condition;
 use extas\components\conditions\ConditionEqual;
 use extas\components\conditions\ConditionRepository;
+use extas\components\extensions\Extension;
+use extas\components\extensions\ExtensionHasCondition;
+use extas\components\extensions\ExtensionRepository;
 use extas\components\jsonrpc\Request;
 use extas\components\jsonrpc\Response;
 use extas\components\players\Player;
@@ -46,6 +49,7 @@ use extas\components\SystemContainer;
 use extas\interfaces\conditions\ICondition;
 use extas\interfaces\conditions\IConditionRepository;
 use extas\interfaces\conditions\IHasCondition;
+use extas\interfaces\extensions\IExtensionHasCondition;
 use extas\interfaces\jsonrpc\IRequest;
 use extas\interfaces\jsonrpc\IResponse;
 use extas\interfaces\jsonrpc\operations\IOperationDispatcher;
@@ -75,6 +79,7 @@ class CreateEventTest extends TestCase
     protected ?IRepository $pluginRepo = null;
     protected ?IRepository $triggersResponsesRepo = null;
     protected ?IRepository $condRepo = null;
+    protected ?IRepository $extRepo = null;
 
     protected function setUp(): void
     {
@@ -87,6 +92,7 @@ class CreateEventTest extends TestCase
         $this->activityRepo = new ActivityRepository();
         $this->playerRepo = new PlayerRepository();
         $this->triggersResponsesRepo = new TriggerResponseRepository();
+        $this->extRepo = new ExtensionRepository();
         $this->pluginRepo = new class extends PluginRepository {
             public function reload()
             {
@@ -154,6 +160,7 @@ class CreateEventTest extends TestCase
             ]
         ]);
         $this->condRepo->delete([ICondition::FIELD__NAME => 'eq']);
+        $this->extRepo->delete([Extension::FIELD__CLASS => ExtensionHasCondition::class]);
     }
 
     protected function getServerRequest(array $params = [])
@@ -765,6 +772,15 @@ class CreateEventTest extends TestCase
             Condition::FIELD__NAME => 'eq',
             Condition::FIELD__CLASS => ConditionEqual::class,
             Condition::FIELD__ALIASES => ['eq', '=']
+        ]));
+
+        $this->extRepo->create(new Extension([
+            Extension::FIELD__CLASS => ExtensionHasCondition::class,
+            Extension::FIELD__INTERFACE => IExtensionHasCondition::class,
+            Extension::FIELD__METHODS => [
+                "isConditionTrue", "getCondition", "getConditionName", "setConditionName"
+            ],
+            Extension::FIELD__SUBJECT => 'extas.sample.parameter'
         ]));
 
         $this->pluginRepo->reload();
