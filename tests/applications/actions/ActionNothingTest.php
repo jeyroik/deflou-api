@@ -1,5 +1,5 @@
 <?php
-namespace tests;
+namespace tests\applications\actions;
 
 use deflou\components\applications\activities\actions\ActionNothing;
 use deflou\components\applications\activities\Activity;

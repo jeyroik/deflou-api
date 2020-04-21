@@ -4,6 +4,7 @@ namespace deflou\components\jsonrpc\operations;
 use deflou\interfaces\applications\activities\IActivity;
 use deflou\interfaces\applications\anchors\IAnchor;
 use deflou\interfaces\applications\anchors\IAnchorRepository;
+use deflou\interfaces\stages\IStageDeFlouTriggerEnrich;
 use deflou\interfaces\stages\IStageDeflouTriggerLaunched;
 use deflou\interfaces\triggers\ITrigger;
 use deflou\interfaces\triggers\ITriggerAction;
@@ -32,7 +33,7 @@ class CreateEvent extends OperationDispatcher implements IOperationCreate
     protected function dispatch(IRequest $request, IResponse &$response)
     {
         $data = $request->getData();
-        $anchorId = $data[static::REQUEST__ANCHOR];
+        $anchorId = $data[static::REQUEST__ANCHOR] ?? '';
         /**
          * @var $anchorRepo IAnchorRepository
          * @var $anchor IAnchor
@@ -48,8 +49,8 @@ class CreateEvent extends OperationDispatcher implements IOperationCreate
 
                 foreach ($triggers as $trigger) {
                     if ($this->isApplicableTrigger($trigger, $event)) {
-                        $action = $trigger->getAction();
-                        $this->enrichTriggerAction($action, $trigger, $event);
+                        $action = $trigger->getAction(true);
+                        $this->enrichTrigger($action, $event, $trigger);
                         /**
                          * @var ITriggerAction $dispatcher
                          */
@@ -61,6 +62,8 @@ class CreateEvent extends OperationDispatcher implements IOperationCreate
                              */
                             $plugin($event, $action, $trigger, $anchor, $triggerResponse);
                         }
+                    } else {
+                        $this->notApplicableTrigger($trigger, $event);
                     }
                 }
                 $response->success([]);
@@ -73,14 +76,28 @@ class CreateEvent extends OperationDispatcher implements IOperationCreate
     }
 
     /**
-     * @param IActivity $action
+     * Заготовка на будущее для логирования подобных кейсов.
+     *
      * @param ITrigger $trigger
      * @param IActivity $event
      */
-    protected function enrichTriggerAction(IActivity &$action, ITrigger &$trigger, IActivity $event)
+    protected function notApplicableTrigger(ITrigger $trigger, IActivity $event): void
     {
-        foreach ($this->getPluginsByStage('deflou.trigger.enrich') as $plugin) {
-            $plugin($trigger, $event);
+
+    }
+
+    /**
+     * @param IActivity $action
+     * @param IActivity $event
+     * @param ITrigger $trigger
+     */
+    protected function enrichTrigger(IActivity $action, IActivity $event, ITrigger &$trigger)
+    {
+        foreach ($this->getPluginsByStage(IStageDeFlouTriggerEnrich::NAME) as $plugin) {
+            /**
+             * @var IStageDeFlouTriggerEnrich $plugin
+             */
+            $plugin($action, $event, $trigger);
         }
     }
 
@@ -93,13 +110,10 @@ class CreateEvent extends OperationDispatcher implements IOperationCreate
      */
     protected function getCurrentEvent(IAnchor $anchor, array $data)
     {
-        $event = $anchor->getEvent();
-        if (!$event) {
-            throw new \Exception('Unknown event "' . $anchor->getEventName() . '"');
-        }
         /**
          * @var ITriggerEvent $eventDispatcher
          */
+        $event = $anchor->getEvent(true);
         $eventDispatcher = $event->buildClassWithParameters($data);
 
         return $eventDispatcher($event, $anchor);
@@ -120,6 +134,8 @@ class CreateEvent extends OperationDispatcher implements IOperationCreate
                 if (!$triggerParameter->isConditionTrue($currentEventParameter->getValue())) {
                     return false;
                 }
+            } else {
+                return false;
             }
         }
 

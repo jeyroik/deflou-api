@@ -1,6 +1,7 @@
 <?php
 namespace deflou\components\plugins\triggers;
 
+use deflou\components\applications\activities\events\EventTriggerLaunched;
 use deflou\interfaces\applications\activities\IActivity;
 use deflou\interfaces\applications\activities\IActivityRepository;
 use deflou\interfaces\applications\anchors\IAnchor;
@@ -67,7 +68,7 @@ class PluginTriggerLaunched extends Plugin implements IStageDeflouTriggerLaunche
          * @var IApplication[] $deflouInstances
          */
         $appRepo = SystemContainer::getItem(IApplicationRepository::class);
-        $deflouInstances = $appRepo->all([IApplication::FIELD__SAMPLE => 'deflou']);
+        $deflouInstances = $appRepo->all([IApplication::FIELD__SAMPLE_NAME => 'deflou']);
         $client = $this->getClient();
 
         foreach ($deflouInstances as $instance) {
@@ -99,10 +100,10 @@ class PluginTriggerLaunched extends Plugin implements IStageDeflouTriggerLaunche
         try {
             $client->request('post', $url, [
                 'json' => [
+                    EventTriggerLaunched::FIELD__TRIGGER_NAME => $trigger->getName(),
+                    EventTriggerLaunched::FIELD__TRIGGER_RESPONSE => $response->__toArray(),
+                    EventTriggerLaunched::FIELD__ANCHOR => $anchor->__toArray(),
                     'anchor' => $currentEventAnchor->getId(),
-                    'trigger_name' => $trigger->getName(),
-                    'response' => $response->__toArray(),
-                    'by_anchor' => $anchor->__toArray(),
                     'version' => '2.0',
                     'df_version' => getenv('DF__VERSION'),
                     'id' => Uuid::uuid6()->toString()
@@ -132,7 +133,7 @@ class PluginTriggerLaunched extends Plugin implements IStageDeflouTriggerLaunche
          */
         $repo = SystemContainer::getItem(IActivityRepository::class);
         $event = $repo->one([
-            IActivity::FIELD__SAMPLE => 'trigger.launched',
+            IActivity::FIELD__SAMPLE_NAME => 'trigger.launched',
             IActivity::FIELD__APPLICATION_NAME => $app->getName()
         ]);
 

@@ -15,7 +15,8 @@
   },
   "autoload": {
     "psr-4": {
-      "deflou\\": "src/"
+      "deflou\\": "src/",
+      "tests\\": "tests/"
     }
   },
   "scripts": {

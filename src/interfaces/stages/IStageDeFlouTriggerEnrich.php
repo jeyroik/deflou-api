@@ -19,8 +19,8 @@ interface IStageDeFlouTriggerEnrich
 
     /**
      * @param IActivity $action
-     * @param ITrigger $trigger
      * @param IActivity $event
+     * @param ITrigger $trigger
      */
-    public function __invoke(IActivity &$action, ITrigger $trigger, IActivity $event): void;
+    public function __invoke(IActivity $action, IActivity $event, ITrigger &$trigger): void;
 }
