@@ -12,6 +12,52 @@
       "stage": "extas.jsonrpc.init"
     }
   ],
+  "parsers": [
+    {
+      "name": "simple_replace_75a71a96-30a4-402c-bae8-6e1c1b1c90ee",
+      "title": "Event parameters",
+      "description": "Replace @event.<param> with event parameters",
+      "class": "extas\\components\\parsers\\ParserSimpleReplace",
+      "value": "",
+      "condition": "!@",
+      "parameters": {
+        "param_name": {
+          "name": "param_name",
+          "value": "event",
+          "title": "Имя параметра",
+          "description": "Имя параметра для замены"
+        },
+        "marker": {
+          "name": "marker",
+          "value": "event",
+          "title": "Маркер",
+          "description": "Маркер для поиска в тексте. По умолчанию равен имени параметра."
+        }
+      }
+    },
+    {
+      "name": "simple_replace_2c22d958-d9de-49bd-bcf2-e1d9df3d9e34",
+      "title": "Trigger parameters",
+      "description": "Replace @trigger.<param> with event parameters",
+      "class": "extas\\components\\parsers\\ParserSimpleReplace",
+      "value": "",
+      "condition": "!@",
+      "parameters": {
+        "param_name": {
+          "name": "param_name",
+          "value": "trigger",
+          "title": "Имя параметра",
+          "description": "Имя параметра для замены"
+        },
+        "marker": {
+          "name": "marker",
+          "value": "trigger",
+          "title": "Маркер",
+          "description": "Маркер для поиска в тексте. По умолчанию равен имени параметра."
+        }
+      }
+    }
+  ],
   "jsonrpc_operations": [
     {
       "name": "event.create",
