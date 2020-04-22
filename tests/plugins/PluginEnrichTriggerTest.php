@@ -33,7 +33,7 @@ class PluginEnrichTriggerTest extends TestCase
         parent::setUp();
         $env = \Dotenv\Dotenv::create(getcwd() . '/tests/');
         $env->load();
-        
+
         $this->condRepo = new ConditionRepository();
         $this->parserRepo = new ParserRepository();
 
@@ -114,10 +114,10 @@ class PluginEnrichTriggerTest extends TestCase
         $plugin = new PluginEnrichTrigger();
         $plugin($action, $event, $trigger);
 
-        $testEvent = $trigger->getParameter('test_event');
+        $testEvent = $trigger->getActionParameter('test_event');
         $this->assertEquals('is ok', $testEvent->getValue());
 
-        $testTrigger = $trigger->getParameter('test_trigger');
+        $testTrigger = $trigger->getActionParameter('test_trigger');
         $this->assertEquals('test_trigger', $testTrigger->getValue());
     }
 }
