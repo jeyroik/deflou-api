@@ -4,8 +4,8 @@
   "require": {
     "jeyroik/extas-installer": "2.*",
     "jeyroik/extas-jsonrpc": "1.*",
+    "jeyroik/extas-parsers": "0.*",
     "jeyroik/deflou-core": "0.*",
-    "jeyroik/deflou-enrichments": "0.*",
     "ramsey/uuid": "4.*"
   },
   "require-dev": {
