@@ -244,7 +244,7 @@ class PluginTriggerLaunchedTest extends TestCase
             protected function getClient(): ClientInterface
             {
                 return new class implements ClientInterface {
-                    public function request(string $method, $uri = '', array $options = []): ResponseInterface
+                    public function request(string $method, $uri, array $options = []): ResponseInterface
                     {
                         throw new class((json_encode($options))) extends \Exception implements GuzzleException{};
                     }
