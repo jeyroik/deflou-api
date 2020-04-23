@@ -22,7 +22,7 @@ class PluginRestTriggerRunRoute extends Plugin
      */
     public function __invoke(App &$app)
     {
-        $app->post('/new/event/{app_anchor}/', function (Request $request, Response $response, array $args) {
+        $app->post('/new/event/{anchor}/', function (Request $request, Response $response, array $args) {
             $router = new Router();
             $data = $_REQUEST;
             $jsonData = json_decode($request->getBody()->getContents(),true);
