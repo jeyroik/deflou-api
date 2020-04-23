@@ -151,6 +151,7 @@ class PluginTriggerLaunchedTest extends TestCase
     {
         $this->appRepo->create(new Application([
             Application::FIELD__NAME => 'deflou',
+            Application::FIELD__SAMPLE_NAME => 'deflou',
             Application::FIELD__PARAMETERS => [
                 'host' => [
                     ISampleParameter::FIELD__NAME => 'host',
@@ -205,7 +206,8 @@ class PluginTriggerLaunchedTest extends TestCase
         putenv('DF__VERSION=3.0');
 
         $this->appRepo->create(new Application([
-            Application::FIELD__NAME => 'deflou'
+            Application::FIELD__NAME => 'deflou',
+            Application::FIELD__SAMPLE_NAME => 'deflou',
         ]));
         $this->activityRepo->create(new Activity([
             Activity::FIELD__NAME => 'trigger.launched_',
