@@ -219,6 +219,7 @@ class PluginTriggerLaunchedTest extends TestCase
             Player::FIELD__NAME => 'test_player'
         ]));
         $currentEventAnchor = $this->anchorRepo->create(new Anchor([
+            Anchor::FIELD__ID => 'test_anchor',
             Anchor::FIELD__EVENT_NAME => 'trigger.launched_',
             Anchor::FIELD__PLAYER_NAME => 'test_player',
             Anchor::FIELD__TRIGGER_NAME => 'test'
@@ -249,15 +250,6 @@ class PluginTriggerLaunchedTest extends TestCase
                 ];
             }
         };
-        $this->assertEquals([
-            EventTriggerLaunched::FIELD__TRIGGER_NAME => $trigger->getName(),
-            EventTriggerLaunched::FIELD__TRIGGER_RESPONSE => $triggerResponse->__toArray(),
-            EventTriggerLaunched::FIELD__ANCHOR => $anchor->__toArray(),
-            'anchor' => $currentEventAnchor->getId(),
-            'version' => '2.0',
-            'df_version' => getenv('DF__VERSION'),
-            'id' => 'Uuid::uuid6()->toString()'
-        ], $plugin->sendingData);
 
         putenv('DF__APP_NAME=deflou');
         $plugin(
@@ -267,5 +259,15 @@ class PluginTriggerLaunchedTest extends TestCase
             $anchor,
             $triggerResponse
         );
+
+        $this->assertEquals([
+            EventTriggerLaunched::FIELD__TRIGGER_NAME => $trigger->getName(),
+            EventTriggerLaunched::FIELD__TRIGGER_RESPONSE => $triggerResponse->__toArray(),
+            EventTriggerLaunched::FIELD__ANCHOR => $anchor->__toArray(),
+            'anchor' => $currentEventAnchor->getId(),
+            'version' => '2.0',
+            'df_version' => getenv('DF__VERSION'),
+            'id' => 'Uuid::uuid6()->toString()'
+        ], $plugin->sendingData);
     }
 }
