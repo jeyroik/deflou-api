@@ -8,39 +8,26 @@ use deflou\components\applications\anchors\Anchor;
 use deflou\components\applications\anchors\AnchorRepository;
 use deflou\components\applications\Application;
 use deflou\components\applications\ApplicationRepository;
-use deflou\components\jsonrpc\operations\CreateTriggerEvent;
 use deflou\components\plugins\triggers\PluginTriggerLaunched;
 use deflou\components\triggers\Trigger;
-use deflou\components\triggers\TriggerRepository;
 use deflou\components\triggers\TriggerResponse;
-use deflou\components\triggers\TriggerResponseRepository;
 use deflou\interfaces\applications\activities\IActivityRepository;
 use deflou\interfaces\applications\anchors\IAnchorRepository;
 use deflou\interfaces\applications\IApplicationRepository;
-use deflou\interfaces\triggers\ITrigger;
-use deflou\interfaces\triggers\ITriggerRepository;
-use deflou\interfaces\triggers\ITriggerResponseRepository;
-use extas\components\extensions\Extension;
-use extas\components\extensions\ExtensionHasCondition;
-use extas\components\extensions\ExtensionRepository;
-use extas\components\jsonrpc\operations\Operation;
-use extas\components\jsonrpc\operations\OperationRepository;
 use extas\components\players\Player;
 use extas\components\players\PlayerRepository;
-use extas\components\plugins\PluginRepository;
 use extas\components\protocols\ProtocolRepository;
 use extas\components\SystemContainer;
-use extas\interfaces\jsonrpc\operations\IOperationRepository;
 use extas\interfaces\players\IPlayerRepository;
 use extas\interfaces\protocols\IProtocolRepository;
 use extas\interfaces\repositories\IRepository;
 use extas\interfaces\samples\parameters\ISampleParameter;
-use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\PromiseInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Throwable;
 
 /**
  * Class PluginTriggerLaunchedTest
@@ -167,7 +154,7 @@ class PluginTriggerLaunchedTest extends TestCase
             Application::FIELD__PARAMETERS => [
                 'host' => [
                     ISampleParameter::FIELD__NAME => 'host',
-                    ISampleParameter::FIELD__VALUE => 'unknown.unk' . mt_rand(100, 999)
+                    ISampleParameter::FIELD__VALUE => '*unknown.unk' . mt_rand(100, 999)
                 ]
             ]
         ]));
@@ -256,10 +243,30 @@ class PluginTriggerLaunchedTest extends TestCase
 
             protected function getClient(): ClientInterface
             {
-                return new class extends Client {
+                return new class implements ClientInterface {
                     public function request(string $method, $uri = '', array $options = []): ResponseInterface
                     {
                         throw new class((json_encode($options))) extends \Exception implements GuzzleException{};
+                    }
+
+                    public function send(RequestInterface $request, array $options = []): ResponseInterface
+                    {
+                        // TODO: Implement send() method.
+                    }
+
+                    public function sendAsync(RequestInterface $request, array $options = []): PromiseInterface
+                    {
+                        // TODO: Implement sendAsync() method.
+                    }
+
+                    public function requestAsync(string $method, $uri, array $options = []): PromiseInterface
+                    {
+                        // TODO: Implement requestAsync() method.
+                    }
+
+                    public function getConfig(?string $option = null)
+                    {
+                        // TODO: Implement getConfig() method.
                     }
                 };
             }
