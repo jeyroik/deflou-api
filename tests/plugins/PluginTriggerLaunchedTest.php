@@ -37,8 +37,10 @@ use extas\interfaces\repositories\IRepository;
 use extas\interfaces\samples\parameters\ISampleParameter;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
+use Throwable;
 
 /**
  * Class PluginTriggerLaunchedTest
@@ -94,8 +96,8 @@ class PluginTriggerLaunchedTest extends TestCase
     public function tearDown(): void
     {
         $this->anchorRepo->delete([Anchor::FIELD__ID => 'test_anchor']);
-        $this->appRepo->delete([Application::FIELD__SAMPLE_NAME => 'test_app']);
-        $this->activityRepo->delete([Activity::FIELD__NAME => ['test_event', 'test_action']]);
+        $this->appRepo->delete([Application::FIELD__NAME => 'deflou']);
+        $this->activityRepo->delete([Activity::FIELD__NAME => 'trigger.launched_']);
         $this->playerRepo->delete([Player::FIELD__NAME => 'test_player']);
     }
 
@@ -179,6 +181,7 @@ class PluginTriggerLaunchedTest extends TestCase
             Player::FIELD__NAME => 'test_player'
         ]));
         $this->anchorRepo->create(new Anchor([
+            Anchor::FIELD__ID => 'test_anchor',
             Anchor::FIELD__EVENT_NAME => 'trigger.launched_',
             Anchor::FIELD__PLAYER_NAME => 'test_player',
             Anchor::FIELD__TRIGGER_NAME => 'test'
@@ -256,7 +259,7 @@ class PluginTriggerLaunchedTest extends TestCase
                 return new class extends Client {
                     public function request(string $method, $uri = '', array $options = []): ResponseInterface
                     {
-                        throw new \Exception(json_encode($options));
+                        throw new class((json_encode($options))) extends \Exception implements GuzzleException{};
                     }
                 };
             }
