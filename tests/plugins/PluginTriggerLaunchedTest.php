@@ -175,6 +175,11 @@ class PluginTriggerLaunchedTest extends TestCase
         ]));
 
         $plugin = new class extends PluginTriggerLaunched {
+            protected function getSendingData($trigger, $response, $anchor, $currentEventAnchor)
+            {
+                throw new \Exception('Error');
+            }
+
             protected function failSendEvent($e, $instance): void
             {
                 throw new \Exception('Fail');
@@ -243,16 +248,15 @@ class PluginTriggerLaunchedTest extends TestCase
             }
         };
         $this->assertEquals([
-            'json' => [
-                EventTriggerLaunched::FIELD__TRIGGER_NAME => $trigger->getName(),
-                EventTriggerLaunched::FIELD__TRIGGER_RESPONSE => $triggerResponse->__toArray(),
-                EventTriggerLaunched::FIELD__ANCHOR => $anchor->__toArray(),
-                'anchor' => $currentEventAnchor->getId(),
-                'version' => '2.0',
-                'df_version' => getenv('DF__VERSION'),
-                'id' => 'Uuid::uuid6()->toString()'
-            ]
+            EventTriggerLaunched::FIELD__TRIGGER_NAME => $trigger->getName(),
+            EventTriggerLaunched::FIELD__TRIGGER_RESPONSE => $triggerResponse->__toArray(),
+            EventTriggerLaunched::FIELD__ANCHOR => $anchor->__toArray(),
+            'anchor' => $currentEventAnchor->getId(),
+            'version' => '2.0',
+            'df_version' => getenv('DF__VERSION'),
+            'id' => 'Uuid::uuid6()->toString()'
         ], $plugin->sendingData);
+
         putenv('DF__APP_NAME=deflou');
         $plugin(
             new Activity(),
