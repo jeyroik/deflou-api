@@ -28,14 +28,18 @@ use extas\components\jsonrpc\operations\Operation;
 use extas\components\jsonrpc\operations\OperationRepository;
 use extas\components\players\PlayerRepository;
 use extas\components\plugins\PluginRepository;
+use extas\components\protocols\ProtocolRepository;
 use extas\components\SystemContainer;
 use extas\interfaces\extensions\IExtensionHasCondition;
 use extas\interfaces\jsonrpc\IResponse;
 use extas\interfaces\jsonrpc\operations\IOperationRepository;
 use extas\interfaces\players\IPlayerRepository;
+use extas\interfaces\protocols\IProtocolRepository;
 use extas\interfaces\repositories\IRepository;
 use PHPUnit\Framework\TestCase;
 use extas\components\jsonrpc\App;
+use Slim\Http\Stream;
+use Slim\Tests\Http\StreamTest;
 
 /**
  * Class PluginRestTriggerRunRouteTest
@@ -99,6 +103,11 @@ class PluginRestTriggerRunRouteTest extends TestCase
             ITriggerResponseRepository::class,
             TriggerResponseRepository::class
         );
+
+        SystemContainer::addItem(
+            IProtocolRepository::class,
+            ProtocolRepository::class
+        );
     }
 
     public function tearDown(): void
@@ -138,7 +147,8 @@ class PluginRestTriggerRunRouteTest extends TestCase
             ]),
             [],
             [],
-            new \Slim\Http\Stream(fopen('php://input', 'r'))
+
+            new \Slim\Http\Stream(fopen(getcwd() . '/tests/.env', 'r'))
         );
 
         $response = new \Slim\Http\Response();
