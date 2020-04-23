@@ -29,7 +29,7 @@ class PluginRestTriggerRunRoute extends Plugin
             $jsonData = $jsonData ?: [];
             $data = array_merge($data, $jsonData, $args);
 
-            $router->dispatch($request, $response, new JsonRpcRequest([
+            return $router->dispatch($request, $response, new JsonRpcRequest([
                 IRequest::FIELD__METHOD => 'trigger.event.create',
                 IRequest::FIELD__ID => '',
                 IRequest::FIELD__PARAMS => [
