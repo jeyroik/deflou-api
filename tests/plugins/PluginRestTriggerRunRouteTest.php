@@ -216,7 +216,7 @@ class PluginRestTriggerRunRouteTest extends TestCase
         foreach ($routes as $route) {
             if ($route->getPattern() == '/new/event/{anchor}/') {
                 $dispatcher = $route->getCallable();
-                $response = $dispatcher($request, $response, []);
+                $response = $dispatcher($request, $response, ['anchor' => 'test_anchor']);
             }
         }
 
