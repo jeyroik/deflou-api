@@ -26,6 +26,7 @@ class PluginRestTriggerRunRoute extends Plugin
             $router = new Router();
             $data = $_REQUEST;
             $jsonData = json_decode($request->getBody()->getContents(),true);
+            $jsonData = $jsonData ?: [];
             $data = array_merge($data, $jsonData, $args);
 
             $router->dispatch($request, $response, new JsonRpcRequest([
