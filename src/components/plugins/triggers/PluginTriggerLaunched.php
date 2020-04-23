@@ -99,21 +99,42 @@ class PluginTriggerLaunched extends Plugin implements IStageDeflouTriggerLaunche
         $url = $schema . $host . ':' . $port . '/api/jsonrpc';
         try {
             $client->request('post', $url, [
-                'json' => [
-                    EventTriggerLaunched::FIELD__TRIGGER_NAME => $trigger->getName(),
-                    EventTriggerLaunched::FIELD__TRIGGER_RESPONSE => $response->__toArray(),
-                    EventTriggerLaunched::FIELD__ANCHOR => $anchor->__toArray(),
-                    'anchor' => $currentEventAnchor->getId(),
-                    'version' => '2.0',
-                    'df_version' => getenv('DF__VERSION'),
-                    'id' => Uuid::uuid6()->toString()
-                ]
+                'json' => $this->getSendingData($trigger, $response, $anchor, $currentEventAnchor)
             ]);
         } catch (GuzzleException $e) {
-            /**
-             * log
-             */
+            $this->failSendEvent($e, $instance);
         }
+    }
+
+    /**
+     * @param $trigger
+     * @param $response
+     * @param $anchor
+     * @param $currentEventAnchor
+     * @return array
+     */
+    protected function getSendingData($trigger, $response, $anchor, $currentEventAnchor)
+    {
+        return [
+            EventTriggerLaunched::FIELD__TRIGGER_NAME => $trigger->getName(),
+            EventTriggerLaunched::FIELD__TRIGGER_RESPONSE => $response->__toArray(),
+            EventTriggerLaunched::FIELD__ANCHOR => $anchor->__toArray(),
+            'anchor' => $currentEventAnchor->getId(),
+            'version' => '2.0',
+            'df_version' => getenv('DF__VERSION'),
+            'id' => Uuid::uuid6()->toString()
+        ];
+    }
+
+    /**
+     * @param $e
+     * @param $instance
+     */
+    protected function failSendEvent($e, $instance): void
+    {
+        /**
+         * log
+         */
     }
 
     protected function getClient(): ClientInterface
@@ -134,7 +155,8 @@ class PluginTriggerLaunched extends Plugin implements IStageDeflouTriggerLaunche
         $repo = SystemContainer::getItem(IActivityRepository::class);
         $event = $repo->one([
             IActivity::FIELD__SAMPLE_NAME => 'trigger.launched',
-            IActivity::FIELD__APPLICATION_NAME => $app->getName()
+            IActivity::FIELD__APPLICATION_NAME => $app->getName(),
+            IActivity::FIELD__TYPE => IActivity::TYPE__EVENT
         ]);
 
         if (!$event) {
