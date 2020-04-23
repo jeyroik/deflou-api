@@ -228,9 +228,10 @@ class PluginTriggerLaunchedTest extends TestCase
         ]);
 
         $plugin = new class extends PluginTriggerLaunched {
+            public array $sendingData = [];
             protected function getSendingData($trigger, $response, $anchor, $currentEventAnchor)
             {
-                return [
+                return $this->sendingData = [
                     EventTriggerLaunched::FIELD__TRIGGER_NAME => $trigger->getName(),
                     EventTriggerLaunched::FIELD__TRIGGER_RESPONSE => $response->__toArray(),
                     EventTriggerLaunched::FIELD__ANCHOR => $anchor->__toArray(),
@@ -240,38 +241,8 @@ class PluginTriggerLaunchedTest extends TestCase
                     'id' => 'Uuid::uuid6()->toString()'
                 ];
             }
-
-            protected function getClient(): ClientInterface
-            {
-                return new class implements ClientInterface {
-                    public function request(string $method, $uri, array $options = []): ResponseInterface
-                    {
-                        throw new class((json_encode($options))) extends \Exception implements GuzzleException{};
-                    }
-
-                    public function send(RequestInterface $request, array $options = []): ResponseInterface
-                    {
-                        // TODO: Implement send() method.
-                    }
-
-                    public function sendAsync(RequestInterface $request, array $options = []): PromiseInterface
-                    {
-                        // TODO: Implement sendAsync() method.
-                    }
-
-                    public function requestAsync(string $method, $uri, array $options = []): PromiseInterface
-                    {
-                        // TODO: Implement requestAsync() method.
-                    }
-
-                    public function getConfig(?string $option = null)
-                    {
-                        // TODO: Implement getConfig() method.
-                    }
-                };
-            }
         };
-        $this->expectExceptionMessage(json_encode([
+        $this->assertEquals([
             'json' => [
                 EventTriggerLaunched::FIELD__TRIGGER_NAME => $trigger->getName(),
                 EventTriggerLaunched::FIELD__TRIGGER_RESPONSE => $triggerResponse->__toArray(),
@@ -281,7 +252,7 @@ class PluginTriggerLaunchedTest extends TestCase
                 'df_version' => getenv('DF__VERSION'),
                 'id' => 'Uuid::uuid6()->toString()'
             ]
-        ]));
+        ], $plugin->sendingData);
         putenv('DF__APP_NAME=deflou');
         $plugin(
             new Activity(),
