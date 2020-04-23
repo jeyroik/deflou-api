@@ -8,6 +8,8 @@ use deflou\components\applications\activities\events\EventNothing;
 use deflou\components\applications\anchors\Anchor;
 use deflou\components\applications\anchors\AnchorRepository;
 use deflou\components\applications\Application;
+use deflou\components\applications\ApplicationRepository;
+use deflou\components\jsonrpc\operations\CreateTriggerEvent;
 use deflou\components\plugins\api\PluginRestTriggerRunRoute;
 use deflou\components\triggers\Trigger;
 use deflou\components\triggers\TriggerRepository;
@@ -21,6 +23,8 @@ use deflou\interfaces\triggers\ITriggerResponseRepository;
 use extas\components\extensions\Extension;
 use extas\components\extensions\ExtensionHasCondition;
 use extas\components\extensions\ExtensionRepository;
+use extas\components\jsonrpc\operations\filters\FilterDefault;
+use extas\components\jsonrpc\operations\Operation;
 use extas\components\jsonrpc\operations\OperationRepository;
 use extas\components\players\PlayerRepository;
 use extas\components\plugins\PluginRepository;
@@ -60,6 +64,7 @@ class PluginRestTriggerRunRouteTest extends TestCase
         defined('APP__ROOT') || define('APP__ROOT', getcwd());
 
         $this->pluginRepo = new PluginRepository();
+        $this->appRepo = new ApplicationRepository();
         $this->anchorRepo = new AnchorRepository();
         $this->activityRepo = new ActivityRepository();
         $this->extRepo = new ExtensionRepository();
@@ -104,6 +109,7 @@ class PluginRestTriggerRunRouteTest extends TestCase
         $this->triggerRepo->delete([ITrigger::FIELD__NAME => 'test']);
         $this->triggersResponsesRepo->delete([TriggerResponse::FIELD__TRIGGER_NAME => 'test']);
         $this->extRepo->delete([Extension::FIELD__CLASS => ExtensionHasCondition::class]);
+        $this->opRepo->delete([Operation::FIELD__CLASS => CreateTriggerEvent::class]);
     }
 
     public function testAddRoute()
@@ -188,6 +194,13 @@ class PluginRestTriggerRunRouteTest extends TestCase
                 "isConditionTrue", "getCondition", "getConditionName", "setConditionName"
             ],
             Extension::FIELD__SUBJECT => 'extas.sample.parameter'
+        ]));
+
+        $this->opRepo->create(new Operation([
+            Operation::FIELD__NAME => 'trigger.event.create',
+            Operation::FIELD__CLASS => CreateTriggerEvent::class,
+            Operation::FIELD__METHOD => 'create',
+            Operation::FIELD__FILTER_CLASS => FilterDefault::class
         ]));
 
         foreach ($routes as $route) {
