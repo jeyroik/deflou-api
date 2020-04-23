@@ -101,7 +101,7 @@ class PluginTriggerLaunched extends Plugin implements IStageDeflouTriggerLaunche
             $client->request('post', $url, [
                 'json' => $this->getSendingData($trigger, $response, $anchor, $currentEventAnchor)
             ]);
-        } catch (GuzzleException $e) {
+        } catch (\Exception $e) {
             $this->failSendEvent($e, $instance);
         }
     }
