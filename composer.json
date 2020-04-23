@@ -6,7 +6,8 @@
     "jeyroik/extas-jsonrpc": "1.*",
     "jeyroik/extas-parsers": "0.*",
     "jeyroik/deflou-core": "0.*",
-    "ramsey/uuid": "4.*"
+    "ramsey/uuid": "4.*",
+    "guzzlehttp/guzzle": "6.*"
   },
   "require-dev": {
     "phpunit/phpunit": "^9",
