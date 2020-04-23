@@ -60,15 +60,15 @@
   ],
   "jsonrpc_operations": [
     {
-      "name": "event.create",
-      "title": "Create event",
-      "description": "Create new event (request) from an application",
+      "name": "trigger.event.create",
+      "title": "Create trigger event",
+      "description": "Create new trigger event (request) from an application",
       "method": "create",
       "item_name": "",
       "item_class": "",
       "item_repo": "",
       "filter_class": "extas\\components\\jsonrpc\\operations\\filters\\FilterDefault",
-      "class": "deflou\\components\\jsonrpc\\operations\\CreateEvent",
+      "class": "deflou\\components\\jsonrpc\\operations\\CreateTriggerEvent",
       "spec": {
         "endpoint": "@basePath/api/jsonrpc",
         "request": {

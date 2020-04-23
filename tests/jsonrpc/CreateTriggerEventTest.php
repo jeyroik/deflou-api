@@ -4,7 +4,6 @@ namespace tests\jsonrpc;
 use deflou\components\applications\activities\actions\ActionNothing;
 use deflou\components\applications\activities\Activity;
 use deflou\components\applications\activities\ActivityRepository;
-use deflou\components\applications\activities\ActivitySample;
 use deflou\components\applications\activities\ActivitySampleRepository;
 use deflou\components\applications\activities\events\EventNothing;
 use deflou\components\applications\activities\events\EventTriggerLaunched;
@@ -12,9 +11,8 @@ use deflou\components\applications\anchors\Anchor;
 use deflou\components\applications\anchors\AnchorRepository;
 use deflou\components\applications\Application;
 use deflou\components\applications\ApplicationRepository;
-use deflou\components\applications\ApplicationSample;
 use deflou\components\applications\ApplicationSampleRepository;
-use deflou\components\jsonrpc\operations\CreateEvent;
+use deflou\components\jsonrpc\operations\CreateTriggerEvent;
 use deflou\components\triggers\Trigger;
 use deflou\components\triggers\TriggerRepository;
 use deflou\components\triggers\TriggerResponse;
@@ -69,7 +67,7 @@ use tests\PluginLaunchedWithException;
  * @package tests\jsonrpc
  * @author jeyroik@gmail.com
  */
-class CreateEventTest extends TestCase
+class CreateTriggerEventTest extends TestCase
 {
     protected ?IRepository $playerRepo = null;
     protected ?IRepository $anchorRepo = null;
@@ -97,11 +95,6 @@ class CreateEventTest extends TestCase
             public function reload()
             {
                 parent::$stagesWithPlugins = [];
-            }
-
-            public function getStageWithPlugins(): array
-            {
-                return static::$stagesWithPlugins;
             }
         };
         $this->triggerRepo = new TriggerRepository();
@@ -168,7 +161,7 @@ class CreateEventTest extends TestCase
         $params = empty($params)
             ? [
                 'data' => [
-                    CreateEvent::REQUEST__ANCHOR => 'test'
+                    CreateTriggerEvent::REQUEST__ANCHOR => 'test'
                 ]
             ]
             : $params;
@@ -249,7 +242,7 @@ class CreateEventTest extends TestCase
      */
     protected function getOperation(): IOperationDispatcher
     {
-        return new class () extends CreateEvent {
+        return new class () extends CreateTriggerEvent {
             protected function notApplicableTrigger(ITrigger $trigger, IActivity $event): void
             {
                 throw new \Exception('Not applicable trigger "' . $trigger->getName() . '"');
@@ -259,7 +252,7 @@ class CreateEventTest extends TestCase
 
     public function testMissedAnchor()
     {
-        $operation = new CreateEvent();
+        $operation = new CreateTriggerEvent();
         $serverRequest = $this->getServerRequest([
             'data' => []
         ]);
@@ -276,10 +269,10 @@ class CreateEventTest extends TestCase
 
     public function testUnknownAnchor()
     {
-        $operation = new CreateEvent();
+        $operation = new CreateTriggerEvent();
         $serverRequest = $this->getServerRequest([
             'data' => [
-                CreateEvent::REQUEST__ANCHOR => 'unknown'
+                CreateTriggerEvent::REQUEST__ANCHOR => 'unknown'
             ]
         ]);
         $serverResponse = $this->getServerResponse();
@@ -295,7 +288,7 @@ class CreateEventTest extends TestCase
 
     public function testUnknownEvent()
     {
-        $operation = new CreateEvent();
+        $operation = new CreateTriggerEvent();
         $serverRequest = $this->getServerRequest();
         $serverResponse = $this->getServerResponse();
 
@@ -316,10 +309,10 @@ class CreateEventTest extends TestCase
 
     public function testRunEventDispatcher()
     {
-        $operation = new CreateEvent();
+        $operation = new CreateTriggerEvent();
         $serverRequest = $this->getServerRequest([
             'data' => [
-                CreateEvent::REQUEST__ANCHOR => 'test',
+                CreateTriggerEvent::REQUEST__ANCHOR => 'test',
                 EventTriggerLaunched::FIELD__TRIGGER_RESPONSE => [],
                 EventTriggerLaunched::FIELD__TRIGGER_NAME => ''
             ]
@@ -480,7 +473,7 @@ class CreateEventTest extends TestCase
         $operation = $this->getOperation();
         $serverRequest = $this->getServerRequest([
             'data' => [
-                CreateEvent::REQUEST__ANCHOR => 'test',
+                CreateTriggerEvent::REQUEST__ANCHOR => 'test',
                 'test' => 5
             ]
         ]);
@@ -733,7 +726,7 @@ class CreateEventTest extends TestCase
         $operation = $this->getOperation();
         $serverRequest = $this->getServerRequest([
             'data' => [
-                CreateEvent::REQUEST__ANCHOR => 'test',
+                CreateTriggerEvent::REQUEST__ANCHOR => 'test',
                 'test' => 5
             ]
         ]);

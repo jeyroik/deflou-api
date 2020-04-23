@@ -1,13 +1,13 @@
 <?php
 namespace deflou\components\plugins\api;
 
-use deflou\interfaces\applications\activities\IHasEvent;
 use extas\components\jsonrpc\App;
 use extas\components\jsonrpc\Router;
 use extas\components\plugins\Plugin;
 use Psr\Http\Message\RequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use extas\interfaces\jsonrpc\IRequest;
+use extas\components\jsonrpc\Request as JsonRpcRequest;
 
 /**
  * Class PluginRestTriggerRunRoute
@@ -28,8 +28,8 @@ class PluginRestTriggerRunRoute extends Plugin
             $jsonData = json_decode($request->getBody()->getContents(),true);
             $data = array_merge($data, $jsonData, $args);
 
-            $router->dispatch($request, $response, new \extas\components\jsonrpc\Request([
-                IRequest::FIELD__METHOD => 'event.create',
+            $router->dispatch($request, $response, new JsonRpcRequest([
+                IRequest::FIELD__METHOD => 'trigger.event.create',
                 IRequest::FIELD__ID => '',
                 IRequest::FIELD__PARAMS => [
                     IRequest::FIELD__PARAMS_DATA => $data

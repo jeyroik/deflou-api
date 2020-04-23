@@ -22,7 +22,7 @@ use extas\interfaces\jsonrpc\operations\IOperationCreate;
  * @package deflou\components\jsonrpc\operations
  * @author jeyroik <jeyroik@gmail.com>
  */
-class CreateEvent extends OperationDispatcher implements IOperationCreate
+class CreateTriggerEvent extends OperationDispatcher implements IOperationCreate
 {
     public const REQUEST__ANCHOR = 'anchor';
 
