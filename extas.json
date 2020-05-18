@@ -12,6 +12,62 @@
       "stage": "extas.jsonrpc.init"
     }
   ],
+  "application_samples": [
+    {
+      "name": "deflou",
+      "title": "DeFlou",
+      "description": "DeFlou instance",
+      "player_name": "admin",
+      "parameters": {
+        "schema": {
+          "name": "schema",
+          "title": "Schema",
+          "description": "Schema"
+        },
+        "host": {
+          "name": "host",
+          "title": "Host",
+          "description": "Host"
+        },
+        "port": {
+          "name": "port",
+          "title": "Port",
+          "description": "Port"
+        }
+      },
+      "created_at": "@timestamp(0)",
+      "updated_at": "@timestamp(0)"
+    }
+  ],
+  "application_activity_samples": [
+    {
+      "name": "event/nothing",
+      "title": "Nothing",
+      "description": "Nothing happened",
+      "player_name": "admin",
+      "type": "event",
+      "class": "deflou\\components\\applications\\activities\\events\\EventNothing",
+      "parameters": {},
+      "created_at": "@timestamp(0)",
+      "updated_at": "@timestamp(0)"
+    },
+    {
+      "name": "action/nothing",
+      "title": "Nothing",
+      "description": "Nothing to do",
+      "player_name": "admin",
+      "type": "action",
+      "class": "deflou\\components\\applications\\activities\\actions\\ActionNothing",
+      "parameters": {
+        "useless": {
+          "name": "useless",
+          "type": "string20"
+        }
+      },
+      "created_at": "@timestamp(0)",
+      "updated_at": "@timestamp(0)"
+    }
+  ],
   "parsers": [
     {
       "name": "simple_replace_75a71a96-30a4-402c-bae8-6e1c1b1c90ee",
