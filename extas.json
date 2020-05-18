@@ -1,11 +1,5 @@
 {
   "name": "deflou/core",
-  "package_classes": [
-    {
-      "interface": "deflou\\interfaces\\applications\\activities\\IActivitySampleRepository",
-      "class": "deflou\\components\\applications\\activities\\ActivitySampleRepository"
-    }
-  ],
   "plugins": [
     {
       "class": "deflou\\components\\plugins\\api\\PluginRestTriggerRunRoute",

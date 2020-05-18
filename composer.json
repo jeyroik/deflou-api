@@ -3,7 +3,7 @@
   "description": "API package for DeFlou",
   "require": {
     "jeyroik/extas-installer": "2.*",
-    "jeyroik/extas-jsonrpc": "1.*",
+    "jeyroik/extas-jsonrpc": "2.*",
     "jeyroik/extas-parsers": "0.*",
     "jeyroik/deflou-core": "0.*",
     "ramsey/uuid": "4.*",

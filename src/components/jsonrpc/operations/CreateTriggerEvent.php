@@ -3,21 +3,21 @@ namespace deflou\components\jsonrpc\operations;
 
 use deflou\interfaces\applications\activities\IActivity;
 use deflou\interfaces\applications\anchors\IAnchor;
-use deflou\interfaces\applications\anchors\IAnchorRepository;
 use deflou\interfaces\stages\IStageDeFlouTriggerEnrich;
 use deflou\interfaces\stages\IStageDeflouTriggerLaunched;
 use deflou\interfaces\triggers\ITrigger;
 use deflou\interfaces\triggers\ITriggerAction;
 use deflou\interfaces\triggers\ITriggerEvent;
-use deflou\interfaces\triggers\ITriggerRepository;
 use extas\components\jsonrpc\operations\OperationDispatcher;
-use extas\components\SystemContainer;
-use extas\interfaces\jsonrpc\IRequest;
-use extas\interfaces\jsonrpc\IResponse;
+use extas\interfaces\conditions\IConditionParameter;
 use extas\interfaces\jsonrpc\operations\IOperationCreate;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Class CreateEvent
+ *
+ * @method anchorRepository()
+ * @method triggerRepository()
  *
  * @package deflou\components\jsonrpc\operations
  * @author jeyroik <jeyroik@gmail.com>
@@ -26,52 +26,56 @@ class CreateTriggerEvent extends OperationDispatcher implements IOperationCreate
 {
     public const REQUEST__ANCHOR = 'anchor';
 
-    /**
-     * @param IRequest $request
-     * @param IResponse $response
-     */
-    protected function dispatch(IRequest $request, IResponse &$response)
+    public function __invoke(): ResponseInterface
     {
+        $request = $this->convertPsrToJsonRpcRequest();
         $data = $request->getData();
         $anchorId = $data[static::REQUEST__ANCHOR] ?? '';
         /**
-         * @var $anchorRepo IAnchorRepository
          * @var $anchor IAnchor
          */
-        $anchorRepo = SystemContainer::getItem(IAnchorRepository::class);
-        $anchor = $anchorRepo->one([IAnchor::FIELD__ID => $anchorId]);
+        $anchor = $this->anchorRepository()->one([IAnchor::FIELD__ID => $anchorId]);
 
-        if ($anchor) {
-            $this->updateAnchor($anchor, $anchorRepo);
-            try {
-                $event = $this->getCurrentEvent($anchor, $data);
-                $triggers = $this->getTriggersByAnchor($anchor);
+        if (!$anchor) {
+            return $this->errorResponse($request->getId(), 'Unknown anchor "' . $anchorId . '"', 400);
+        }
 
-                foreach ($triggers as $trigger) {
-                    if ($this->isApplicableTrigger($trigger, $event)) {
-                        $action = $trigger->getAction(true);
-                        $this->enrichTrigger($action, $event, $trigger);
-                        /**
-                         * @var ITriggerAction $dispatcher
-                         */
-                        $dispatcher = $action->buildClassWithParameters();
-                        $triggerResponse = $dispatcher($action, $event, $trigger, $anchor);
-                        foreach ($this->getPluginsByStage(IStageDeflouTriggerLaunched::NAME) as $plugin) {
-                            /**
-                             * @var IStageDeflouTriggerLaunched $plugin
-                             */
-                            $plugin($event, $action, $trigger, $anchor, $triggerResponse);
-                        }
-                    } else {
-                        $this->notApplicableTrigger($trigger, $event);
-                    }
-                }
-                $response->success([]);
-            } catch (\Exception $e) {
-                $response->error($e->getMessage(), 400);
+        $this->updateAnchor($anchor);
+        try {
+            $event = $this->getCurrentEvent($anchor, $data);
+            $triggers = $this->getTriggersByAnchor($anchor);
+
+            foreach ($triggers as $trigger) {
+                $this->isApplicableTrigger($trigger, $event)
+                    ? $this->runTrigger($trigger, $event, $anchor)
+                    : $this->notApplicableTrigger($trigger, $event);
             }
-        } else {
-            $response->error('Unknown anchor "' . $anchorId . '"', 400);
+            return $this->successResponse($request->getId(), []);
+        } catch (\Exception $e) {
+            return $this->errorResponse($request->getId(), $e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * @param ITrigger $trigger
+     * @param IActivity $event
+     * @param IAnchor $anchor
+     * @throws \Exception
+     */
+    protected function runTrigger(ITrigger $trigger, IActivity $event, IAnchor $anchor): void
+    {
+        $action = $trigger->getAction(true);
+        $this->enrichTrigger($action, $event, $trigger);
+        /**
+         * @var ITriggerAction $dispatcher
+         */
+        $dispatcher = $action->buildClassWithParameters();
+        $triggerResponse = $dispatcher($action, $event, $trigger, $anchor);
+        foreach ($this->getPluginsByStage(IStageDeflouTriggerLaunched::NAME) as $plugin) {
+            /**
+             * @var IStageDeflouTriggerLaunched $plugin
+             */
+            $plugin($event, $action, $trigger, $anchor, $triggerResponse);
         }
     }
 
@@ -115,7 +119,6 @@ class CreateTriggerEvent extends OperationDispatcher implements IOperationCreate
          */
         $event = $anchor->getEvent(true);
         $event->addParametersByValues($data);
-
         $eventDispatcher = $event->buildClassWithParameters($data);
 
         return $eventDispatcher($event, $anchor);
@@ -131,12 +134,7 @@ class CreateTriggerEvent extends OperationDispatcher implements IOperationCreate
     {
         $triggerParameters = $trigger->getEventParameters();
         foreach ($triggerParameters as $triggerParameter) {
-            if ($event->hasParameter($triggerParameter->getName())) {
-                $currentEventParameter = $event->getParameter($triggerParameter->getName());
-                if (!$triggerParameter->isConditionTrue($currentEventParameter->getValue())) {
-                    return false;
-                }
-            } else {
+            if (!$this->eventHasApplicableParameter($event, $triggerParameter)) {
                 return false;
             }
         }
@@ -145,14 +143,32 @@ class CreateTriggerEvent extends OperationDispatcher implements IOperationCreate
     }
 
     /**
-     * @param IAnchor $anchor
-     * @param IAnchorRepository $anchorRepo
+     * @param IActivity $event
+     * @param IConditionParameter $triggerParameter
+     * @return bool
      */
-    protected function updateAnchor(IAnchor $anchor, IAnchorRepository $anchorRepo)
+    protected function eventHasApplicableParameter(IActivity $event, IConditionParameter $triggerParameter): bool
+    {
+        if (!$event->hasParameter($triggerParameter->getName())) {
+            return false;
+        }
+
+        $currentEventParameter = $event->getParameter($triggerParameter->getName());
+        if (!$triggerParameter->isConditionTrue($currentEventParameter->getValue())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param IAnchor $anchor
+     */
+    protected function updateAnchor(IAnchor $anchor)
     {
         $anchor->incCallsNumber();
         $anchor->setLastCallTime(time());
-        $anchorRepo->update($anchor);
+        $this->anchorRepository()->update($anchor);
     }
 
     /**
@@ -161,31 +177,24 @@ class CreateTriggerEvent extends OperationDispatcher implements IOperationCreate
      */
     protected function getTriggersByAnchor($anchor)
     {
-        /**
-         * @var $triggerRepo ITriggerRepository
-         */
-        $triggerRepo = SystemContainer::getItem(ITriggerRepository::class);
-
         $type2triggers = [
-            IAnchor::TYPE__GENERAL => function (IAnchor $anchor) use ($triggerRepo) {
-                return $triggerRepo->all([ITrigger::FIELD__EVENT_NAME => $anchor->getEventName()]);
+            IAnchor::TYPE__GENERAL => function (IAnchor $anchor) {
+                return $this->triggerRepository()->all([ITrigger::FIELD__EVENT_NAME => $anchor->getEventName()]);
             },
-            IAnchor::TYPE__PLAYER => function (IAnchor $anchor) use ($triggerRepo) {
-                return $triggerRepo->all([
+            IAnchor::TYPE__PLAYER => function (IAnchor $anchor) {
+                return $this->triggerRepository()->all([
                     ITrigger::FIELD__EVENT_NAME => $anchor->getEventName(),
                     ITrigger::FIELD__PLAYER_NAME => $anchor->getPlayerName()
                 ]);
             },
-            IAnchor::TYPE__TRIGGER => function (IAnchor $anchor) use ($triggerRepo) {
-                return $triggerRepo->all([ITrigger::FIELD__NAME => $anchor->getTriggerName()]);
+            IAnchor::TYPE__TRIGGER => function (IAnchor $anchor) {
+                return $this->triggerRepository()->all([ITrigger::FIELD__NAME => $anchor->getTriggerName()]);
             }
         ];
 
         $type = $anchor->getType();
 
-        return isset($type2triggers[$type])
-            ? $type2triggers[$type]($anchor)
-            : [];
+        return isset($type2triggers[$type]) ? $type2triggers[$type]($anchor) : [];
     }
 
     /**
