@@ -2,8 +2,8 @@
   "name": "jeyroik/deflou-api",
   "description": "API package for DeFlou",
   "require": {
-    "jeyroik/extas-installer": "2.*",
-    "jeyroik/extas-jsonrpc": "2.*",
+    "jeyroik/extas-installer": "3.*",
+    "jeyroik/extas-jsonrpc": "3.*",
     "jeyroik/extas-parsers": "0.*",
     "jeyroik/deflou-core": "0.*",
     "ramsey/uuid": "4.*",
@@ -12,7 +12,8 @@
   "require-dev": {
     "phpunit/phpunit": "^9",
     "vlucas/phpdotenv": "^3.4",
-    "phpstan/phpstan": "0.*"
+    "phpstan/phpstan": "0.*",
+    "jeyroik/extas-snuffbox": "0.*"
   },
   "autoload": {
     "psr-4": {

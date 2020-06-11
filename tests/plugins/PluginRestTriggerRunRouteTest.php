@@ -23,9 +23,8 @@ use deflou\interfaces\triggers\ITriggerResponseRepository;
 use extas\components\extensions\Extension;
 use extas\components\extensions\ExtensionHasCondition;
 use extas\components\extensions\ExtensionRepository;
-use extas\components\jsonrpc\operations\filters\FilterDefault;
-use extas\components\jsonrpc\operations\Operation;
-use extas\components\jsonrpc\operations\OperationRepository;
+use extas\components\operations\Operation;
+use extas\components\operations\JsonRpcOperation;
 use extas\components\players\PlayerRepository;
 use extas\components\plugins\PluginRepository;
 use extas\components\protocols\ProtocolRepository;
@@ -38,8 +37,6 @@ use extas\interfaces\protocols\IProtocolRepository;
 use extas\interfaces\repositories\IRepository;
 use PHPUnit\Framework\TestCase;
 use extas\components\jsonrpc\App;
-use Slim\Http\Stream;
-use Slim\Tests\Http\StreamTest;
 
 /**
  * Class PluginRestTriggerRunRouteTest
@@ -118,7 +115,7 @@ class PluginRestTriggerRunRouteTest extends TestCase
         $this->triggerRepo->delete([ITrigger::FIELD__NAME => 'test']);
         $this->triggersResponsesRepo->delete([TriggerResponse::FIELD__TRIGGER_NAME => 'test']);
         $this->extRepo->delete([Extension::FIELD__CLASS => ExtensionHasCondition::class]);
-        $this->opRepo->delete([Operation::FIELD__CLASS => CreateTriggerEvent::class]);
+        $this->opRepo->delete([JsonRpcOperation::FIELD__CLASS => CreateTriggerEvent::class]);
     }
 
     public function testAddRoute()
