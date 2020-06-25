@@ -1,12 +1,12 @@
 <?php
 namespace tests\jsonrpc;
 
-use deflou\components\applications\activities\actions\ActionNothing;
+use deflou\components\applications\actions\ActionNothing;
 use deflou\components\applications\activities\Activity;
 use deflou\components\applications\activities\ActivityRepository;
 use deflou\components\applications\activities\ActivitySampleRepository;
-use deflou\components\applications\activities\events\EventNothing;
-use deflou\components\applications\activities\events\EventTriggerLaunched;
+use deflou\components\applications\events\EventNothing;
+use deflou\components\applications\events\EventTriggerLaunched;
 use deflou\components\applications\anchors\Anchor;
 use deflou\components\applications\anchors\AnchorRepository;
 use deflou\components\applications\Application;
@@ -53,6 +53,7 @@ use extas\interfaces\jsonrpc\operations\IOperationDispatcher;
 use extas\interfaces\samples\parameters\ISampleParameter;
 
 use Dotenv\Dotenv;
+use GuzzleHttp\Client;
 use PHPUnit\Framework\TestCase;
 use tests\ActionWithException;
 use tests\PluginEnrichWithException;
@@ -93,7 +94,8 @@ class CreateTriggerEventTest extends TestCase
             'playerRepository' => PlayerRepository::class,
             'deflouTriggerResponseRepository' => TriggerResponseRepository::class,
             'pluginRepository' => PluginRepository::class,
-            'fieldRepository' => FieldRepository::class
+            'fieldRepository' => FieldRepository::class,
+            'httpClient' => Client::class
         ]);
     }
 

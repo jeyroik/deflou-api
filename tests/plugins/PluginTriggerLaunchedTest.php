@@ -3,7 +3,7 @@ namespace tests\plugins;
 
 use deflou\components\applications\activities\Activity;
 use deflou\components\applications\activities\ActivityRepository;
-use deflou\components\applications\activities\events\EventTriggerLaunched;
+use deflou\components\applications\events\EventTriggerLaunched;
 use deflou\components\applications\anchors\Anchor;
 use deflou\components\applications\anchors\AnchorRepository;
 use deflou\components\applications\Application;
@@ -17,6 +17,7 @@ use extas\components\players\PlayerRepository;
 use extas\components\protocols\ProtocolRepository;
 use extas\components\repositories\TSnuffRepository;
 use extas\interfaces\samples\parameters\ISampleParameter;
+use GuzzleHttp\Client;
 use GuzzleHttp\Promise\PromiseInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -43,7 +44,8 @@ class PluginTriggerLaunchedTest extends TestCase
             'deflouAnchorRepository' => AnchorRepository::class,
             'deflouActivityRepository' => ActivityRepository::class,
             'playerRepository' => PlayerRepository::class,
-            'protocolRepository' => ProtocolRepository::class
+            'protocolRepository' => ProtocolRepository::class,
+            'httpClient' => Client::class
         ]);
     }
 
@@ -219,7 +221,9 @@ class PluginTriggerLaunchedTest extends TestCase
                 return $this->sendingData = [
                     EventTriggerLaunched::FIELD__TRIGGER_NAME => $this->getTrigger()->getName(),
                     EventTriggerLaunched::FIELD__TRIGGER_RESPONSE => $response->__toArray(),
-                    EventTriggerLaunched::FIELD__ANCHOR => $this->getActivity()->getParameterValue('anchor')->__toArray(),
+                    EventTriggerLaunched::FIELD__ANCHOR => $this->getActivity()
+                        ->getParameterValue('anchor')
+                        ->__toArray(),
                     'anchor' => $currentEventAnchor->getId(),
                     'version' => '2.0',
                     'df_version' => getenv('DF__VERSION'),
