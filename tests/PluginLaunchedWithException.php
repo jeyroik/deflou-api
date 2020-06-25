@@ -32,6 +32,6 @@ class PluginLaunchedWithException extends Plugin implements IStageTriggerLaunche
      */
     public function __invoke(ITriggerResponse $triggerResponse): void
     {
-        throw new \Exception(static::EXCEPTION__MESSAGE);
+        throw new \Exception(static::EXCEPTION__MESSAGE, 400);
     }
 }

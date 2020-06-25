@@ -30,6 +30,6 @@ class PluginEnrichWithException extends Plugin implements IStageTriggerEnrich
      */
     public function __invoke(ITrigger &$trigger): void
     {
-        throw new \Exception(static::EXCEPTION__MESSAGE);
+        throw new \Exception(static::EXCEPTION__MESSAGE, 400);
     }
 }
