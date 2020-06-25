@@ -36,18 +36,15 @@ use extas\components\conditions\ConditionEqual;
 use extas\components\conditions\ConditionRepository;
 use extas\components\extensions\Extension;
 use extas\components\extensions\ExtensionHasCondition;
-use extas\components\extensions\ExtensionLogger;
-use extas\components\extensions\ExtensionRepository;
 use extas\components\extensions\TSnuffExtensions;
 use extas\components\fields\FieldRepository;
 use extas\components\http\TSnuffHttp;
-use extas\components\loggers\Logger;
+use extas\components\loggers\BufferLogger;
+use extas\components\loggers\TSnuffLogging;
 use extas\components\players\PlayerRepository;
 use extas\components\plugins\Plugin;
 use extas\components\plugins\PluginRepository;
 use extas\components\plugins\TSnuffPlugins;
-use extas\components\repositories\TSnuffRepository;
-use extas\components\repositories\TSnuffRepositoryDynamic;
 use extas\interfaces\conditions\IHasCondition;
 use extas\interfaces\extensions\IExtensionHasCondition;
 use extas\interfaces\jsonrpc\IResponse;
@@ -71,16 +68,14 @@ class CreateTriggerEventTest extends TestCase
     use TSnuffHttp;
     use TSnuffExtensions;
     use TSnuffPlugins;
-    use TSnuffRepositoryDynamic;
+    use TSnuffLogging;
 
     protected function setUp(): void
     {
         parent::setUp();
         $env = Dotenv::create(getcwd() . '/tests/');
         $env->load();
-        $this->createSnuffDynamicRepositories([
-            ['loggers', 'name', Logger::class]
-        ]);
+        $this->turnSnuffLoggingOn();
 
         $this->registerSnuffRepos([
             'conditionRepository' => ConditionRepository::class,
@@ -96,17 +91,12 @@ class CreateTriggerEventTest extends TestCase
             'pluginRepository' => PluginRepository::class,
             'fieldRepository' => FieldRepository::class
         ]);
-
-        $this->createWithSnuffRepo('extensionRepository', new Extension([
-            Extension::FIELD__CLASS => ExtensionLogger::class,
-            Extension::FIELD__SUBJECT => '*',
-            Extension::FIELD__METHODS => ['notice']
-        ]));
     }
 
     public function tearDown(): void
     {
         $this->deleteSnuffDynamicRepositories();
+        $this->turnSnuffLoggingOff();
     }
 
     public function testMissedAnchor()
@@ -195,10 +185,11 @@ class CreateTriggerEventTest extends TestCase
             ]
         ]));
 
-        $this->responseHasError($operation, $this->getError(
-            400,
-            'Not applicable trigger "test"'
-        ));
+        $this->assertArrayHasKey('notice', BufferLogger::$log);
+        $this->assertEquals(
+            'Can not apply trigger "test" to an event',
+            array_shift(BufferLogger::$log['notice'])
+        );
     }
 
     /**
@@ -237,10 +228,11 @@ class CreateTriggerEventTest extends TestCase
             ]
         ]));
 
-        $this->responseHasError($operation, $this->getError(
-            400,
-            'Not applicable trigger "test"'
-        ));
+        $this->assertArrayHasKey('notice', BufferLogger::$log);
+        $this->assertEquals(
+            'Can not apply trigger "test" to an event',
+            array_shift(BufferLogger::$log['notice'])
+        );
     }
 
     /**
@@ -278,10 +270,11 @@ class CreateTriggerEventTest extends TestCase
             ]
         ]));
 
-        $this->responseHasError($operation, $this->getError(
-            400,
-            'Not applicable trigger "test"'
-        ));
+        $this->assertArrayHasKey('notice', BufferLogger::$log);
+        $this->assertEquals(
+            'Can not apply trigger "test" to an event',
+            array_shift(BufferLogger::$log['notice'])
+        );
     }
 
     /**
@@ -336,10 +329,11 @@ class CreateTriggerEventTest extends TestCase
             Extension::FIELD__SUBJECT => 'extas.sample.parameter'
         ]));
 
-        $this->responseHasError($operation, $this->getError(
-            400,
-            'Not applicable trigger "test"'
-        ));
+        $this->assertArrayHasKey('notice', BufferLogger::$log);
+        $this->assertEquals(
+            'Can not apply trigger "test" to an event',
+            array_shift(BufferLogger::$log['notice'])
+        );
     }
 
     /**

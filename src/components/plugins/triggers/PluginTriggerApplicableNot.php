@@ -13,7 +13,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Class PluginTriggerApplicableNot
  *
- * @method LoggerInterface logger()
+ * @method notice($message, array $context)
  *
  * @package deflou\components\plugins\triggers
  * @author jeyroik <jeyroik@gmail.com>
@@ -31,7 +31,7 @@ class PluginTriggerApplicableNot extends Plugin implements IStageTriggerApplicab
      */
     public function __invoke(): void
     {
-        $this->logger()->notice('Can not apply trigger to an event', [
+        $this->notice('Can not apply trigger "' . $this->getTrigger()->getName() . '" to an event', [
             'trigger' => $this->getTrigger()->getName(),
             'event' => $this->getActivity()->getName(),
             'request' => $this->getJsonRpcRequest()->__toArray()
