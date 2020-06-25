@@ -2,20 +2,15 @@
 namespace tests\plugins;
 
 use deflou\components\applications\activities\Activity;
-use deflou\components\plugins\triggers\PluginEnrichTrigger;
 use deflou\components\plugins\triggers\PluginTriggerEnrich;
 use deflou\components\triggers\Trigger;
 use extas\components\conditions\Condition;
 use extas\components\conditions\ConditionNotEmpty;
 use extas\components\conditions\ConditionRepository;
 use extas\components\parsers\Parser;
-use extas\components\parsers\ParserRepository;
 use extas\components\parsers\ParserSimpleReplace;
-use extas\components\repositories\TSnuffRepository;
-use extas\components\SystemContainer;
-use extas\interfaces\conditions\IConditionRepository;
-use extas\interfaces\parsers\IParserRepository;
-use extas\interfaces\repositories\IRepository;
+use extas\components\repositories\TSnuffRepositoryDynamic;
+use extas\components\THasMagicClass;
 use extas\interfaces\samples\parameters\ISampleParameter;
 use PHPUnit\Framework\TestCase;
 
@@ -27,13 +22,18 @@ use PHPUnit\Framework\TestCase;
  */
 class PluginEnrichTriggerTest extends TestCase
 {
-    use TSnuffRepository;
+    use TSnuffRepositoryDynamic;
+    use THasMagicClass;
 
     protected function setUp(): void
     {
         parent::setUp();
         $env = \Dotenv\Dotenv::create(getcwd() . '/tests/');
         $env->load();
+
+        $this->createSnuffDynamicRepositories([
+            ['parserRepository', 'name', Parser::class]
+        ]);
 
         $this->registerSnuffRepos([
             'conditionRepository' => ConditionRepository::class
@@ -77,7 +77,7 @@ class PluginEnrichTriggerTest extends TestCase
             Condition::FIELD__ALIASES => ['not_empty', '!@', '!null', '!empty']
         ]));
 
-        $this->parserRepo->create(new Parser([
+        $this->getMagicClass('parserRepository')->create(new Parser([
             Parser::FIELD__NAME => 'replace_with_event_parameters',
             Parser::FIELD__CLASS => ParserSimpleReplace::class,
             Parser::FIELD__VALUE => '',
@@ -89,7 +89,7 @@ class PluginEnrichTriggerTest extends TestCase
                 ]
             ]
         ]));
-        $this->parserRepo->create(new Parser([
+        $this->getMagicClass('parserRepository')->create(new Parser([
             Parser::FIELD__NAME => 'replace_with_trigger_parameters',
             Parser::FIELD__CLASS => ParserSimpleReplace::class,
             Parser::FIELD__VALUE => '',
