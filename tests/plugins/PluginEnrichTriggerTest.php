@@ -7,6 +7,7 @@ use deflou\components\triggers\Trigger;
 use extas\components\conditions\Condition;
 use extas\components\conditions\ConditionNotEmpty;
 use extas\components\conditions\ConditionRepository;
+use extas\components\http\TSnuffHttp;
 use extas\components\parsers\Parser;
 use extas\components\parsers\ParserSimpleReplace;
 use extas\components\repositories\TSnuffRepositoryDynamic;
@@ -24,6 +25,7 @@ class PluginEnrichTriggerTest extends TestCase
 {
     use TSnuffRepositoryDynamic;
     use THasMagicClass;
+    use TSnuffHttp;
 
     protected function setUp(): void
     {
@@ -60,7 +62,6 @@ class PluginEnrichTriggerTest extends TestCase
                 ]
             ]
         ]);
-        $action = new Activity([]);
         $event = new Activity([
             Activity::FIELD__NAME => 'test_event',
             Activity::FIELD__PARAMETERS => [
@@ -102,7 +103,10 @@ class PluginEnrichTriggerTest extends TestCase
             ]
         ]));
 
-        $plugin = new PluginTriggerEnrich([PluginTriggerEnrich::FIELD__ACTIVITY => $event]);
+        $plugin = new PluginTriggerEnrich([
+            PluginTriggerEnrich::FIELD__ACTIVITY => $event,
+            PluginTriggerEnrich::FIELD__PSR_REQUEST => $this->getPsrRequest('.applicable.trigger')
+        ]);
         $plugin($trigger);
 
         $testEvent = $trigger->getActionParameter('test_event');

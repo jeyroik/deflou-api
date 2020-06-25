@@ -504,6 +504,13 @@ class CreateTriggerEventTest extends TestCase
         ]));
 
         $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'trigger.launched',
+            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__APPLICATION_NAME => 'test_app',
+            Activity::FIELD__CLASS => EventNothing::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
             Activity::FIELD__NAME => 'test_action',
             Activity::FIELD__TYPE => Activity::TYPE__ACTION,
             Activity::FIELD__APPLICATION_NAME => 'test_app',

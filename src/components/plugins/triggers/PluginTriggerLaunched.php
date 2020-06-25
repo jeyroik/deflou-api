@@ -6,7 +6,7 @@ use deflou\interfaces\applications\anchors\IAnchor;
 use deflou\interfaces\applications\IApplication;
 use deflou\interfaces\stages\IStageTriggerLaunched;
 use deflou\interfaces\triggers\ITriggerResponse;
-use deflou\components\applications\activities\events\EventTriggerLaunched;
+use deflou\components\applications\events\EventTriggerLaunched;
 use deflou\components\applications\activities\THasActivity;
 use deflou\components\triggers\THasTriggerObject;
 
@@ -56,7 +56,6 @@ class PluginTriggerLaunched extends Plugin implements IStageTriggerLaunched
         $trigger = $this->getTrigger();
         $newEvent = $this->getCurrentInstanceEventName();
         $owner = $trigger->getPlayer();
-        $anchor = $this->getActivity()->getParameterValue('anchor');
         $currentEventAnchor = $this->deflouAnchorRepository()->one([
             IAnchor::FIELD__EVENT_NAME => $newEvent->getName(),
             IAnchor::FIELD__PLAYER_NAME => $owner->getName(),
