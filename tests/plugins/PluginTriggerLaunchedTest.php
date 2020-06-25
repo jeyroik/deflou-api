@@ -40,6 +40,7 @@ class PluginTriggerLaunchedTest extends TestCase
         $this->registerSnuffRepos([
             'deflouApplicationRepository' => ApplicationRepository::class,
             'anchorRepository' => AnchorRepository::class,
+            'deflouAnchorRepository' => AnchorRepository::class,
             'deflouActivityRepository' => ActivityRepository::class,
             'playerRepository' => PlayerRepository::class,
             'protocolRepository' => ProtocolRepository::class
@@ -76,7 +77,7 @@ class PluginTriggerLaunchedTest extends TestCase
         $plugin = new PluginTriggerLaunched([
             PluginTriggerLaunched::FIELD__TRIGGER => new Trigger()
         ]);
-        $this->expectExceptionMessage('Missed event trigger.launched for the current instance');
+        $this->expectExceptionMessage('Missed or unknown event "trigger.launched" for the current instance');
         putenv('DF__APP_NAME=deflou');
         $plugin(new TriggerResponse());
     }
