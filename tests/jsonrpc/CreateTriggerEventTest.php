@@ -41,6 +41,7 @@ use extas\components\fields\FieldRepository;
 use extas\components\http\TSnuffHttp;
 use extas\components\loggers\BufferLogger;
 use extas\components\loggers\TSnuffLogging;
+use extas\components\parsers\Parser;
 use extas\components\players\PlayerRepository;
 use extas\components\plugins\Plugin;
 use extas\components\plugins\PluginRepository;
@@ -76,6 +77,9 @@ class CreateTriggerEventTest extends TestCase
         $env = Dotenv::create(getcwd() . '/tests/');
         $env->load();
         $this->turnSnuffLoggingOn();
+        $this->addSnuffDynamicRepositories([
+            ['parserRepository', 'name', Parser::class]
+        ]);
 
         $this->registerSnuffRepos([
             'conditionRepository' => ConditionRepository::class,
