@@ -43,12 +43,32 @@ class CreateTriggerEvent extends OperationDispatcher implements IOperationCreate
             $triggers = $this->getTriggers($event);
 
             foreach ($triggers as $trigger) {
+                $this->validateTrigger($trigger);
                 $this->dispatchTrigger($trigger, $event);
             }
 
             return $this->successResponse($request->getId(), []);
         } catch (\Exception $e) {
             return $this->errorResponse($request->getId(), $e->getMessage(), $e->getCode());
+        }
+    }
+
+    /**
+     * @param ITrigger $trigger
+     * @throws MissedOrUnknown
+     */
+    protected function validateTrigger(ITrigger $trigger): void
+    {
+        if (!$trigger->getName()) {
+            throw new MissedOrUnknown('trigger');
+        }
+
+        if (!$trigger->getAction()) {
+            throw new MissedOrUnknown('action for trigger "' . $trigger->getName() . '"');
+        }
+
+        if (!$trigger->getEvent()) {
+            throw new MissedOrUnknown('event for trigger "' . $trigger->getName() . '"');
         }
     }
 

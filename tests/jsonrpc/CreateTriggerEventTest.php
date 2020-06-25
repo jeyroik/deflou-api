@@ -382,7 +382,7 @@ class CreateTriggerEventTest extends TestCase
 
         $this->responseHasError($operation, $this->getError(
             400,
-            'Missed or unknown action "unknown"'
+            'Missed or unknown action for trigger "test"'
         ));
     }
 

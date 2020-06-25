@@ -1,11 +1,13 @@
 <?php
 namespace tests;
 
-use deflou\interfaces\applications\activities\IActivity;
-use deflou\interfaces\applications\anchors\IAnchor;
-use deflou\interfaces\stages\IStageDeflouTriggerLaunched;
-use deflou\interfaces\triggers\ITrigger;
+use deflou\components\applications\activities\THasActivity;
+use deflou\components\triggers\THasTriggerObject;
+use deflou\interfaces\stages\IStageTriggerLaunched;
 use deflou\interfaces\triggers\ITriggerResponse;
+use extas\components\http\THasHttpIO;
+use extas\components\jsonrpc\THasJsonRpcRequest;
+use extas\components\jsonrpc\THasJsonRpcResponse;
 use extas\components\plugins\Plugin;
 
 /**
@@ -14,19 +16,21 @@ use extas\components\plugins\Plugin;
  * @package tests
  * @author jeyroik@gmail.com
  */
-class PluginLaunchedWithException extends Plugin implements IStageDeflouTriggerLaunched
+class PluginLaunchedWithException extends Plugin implements IStageTriggerLaunched
 {
     public const EXCEPTION__MESSAGE = 'Worked launched';
 
+    use THasHttpIO;
+    use THasJsonRpcRequest;
+    use THasJsonRpcResponse;
+    use THasActivity;
+    use THasTriggerObject;
+
     /**
-     * @param IActivity $action
-     * @param IActivity $event
-     * @param ITrigger $trigger
-     * @param IAnchor $anchor
-     * @param ITriggerResponse $response
+     * @param ITriggerResponse $triggerResponse
      * @throws \Exception
      */
-    public function __invoke(IActivity $action, IActivity $event, ITrigger $trigger, IAnchor $anchor, ITriggerResponse $response): void
+    public function __invoke(ITriggerResponse $triggerResponse): void
     {
         throw new \Exception(static::EXCEPTION__MESSAGE);
     }
