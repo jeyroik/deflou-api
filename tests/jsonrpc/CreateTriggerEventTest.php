@@ -571,7 +571,7 @@ class CreateTriggerEventTest extends TestCase
         $this->createSnuffPlugin(PluginTriggerLaunched::class, [IStageTriggerLaunched::NAME]);
         $this->createSnuffPlugin(PluginTriggerRun::class, [IStageTriggerRun::NAME]);
         $this->createSnuffPlugin(PluginTriggerTriggers::class, [IStageTriggerTriggers::NAME]);
-        
+
         return new CreateTriggerEvent([
             CreateTriggerEvent::FIELD__PSR_REQUEST => $this->getPsrRequest($requestSuffix),
             CreateTriggerEvent::FIELD__PSR_RESPONSE => $this->getPsrResponse()

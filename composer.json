@@ -22,11 +22,7 @@
     }
   },
   "scripts": {
-    "init": "vendor/bin/extas init",
-    "install": "vendor/bin/extas install",
-    "uninstall": "vendor/bin/extas uninstall",
     "up": "vendor/bin/extas init && vendor/bin/extas install",
-    "down": "vendor/bin/extas uninstall",
     "test": "vendor/bin/phpunit --testdox --coverage-clover=coverage.xml --whitelist=src tests",
     "stan": "vendor/bin/phpstan analyse -l 5 src"
   }
