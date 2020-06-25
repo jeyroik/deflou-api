@@ -60,15 +60,15 @@ class CreateTriggerEvent extends OperationDispatcher implements IOperationCreate
     protected function validateTrigger(ITrigger $trigger): void
     {
         if (!$trigger->getName()) {
-            throw new MissedOrUnknown('trigger');
+            throw new MissedOrUnknown('trigger', 400);
         }
 
         if (!$trigger->getAction()) {
-            throw new MissedOrUnknown('action for trigger "' . $trigger->getName() . '"');
+            throw new MissedOrUnknown('action for trigger "' . $trigger->getName() . '"', 400);
         }
 
         if (!$trigger->getEvent()) {
-            throw new MissedOrUnknown('event for trigger "' . $trigger->getName() . '"');
+            throw new MissedOrUnknown('event for trigger "' . $trigger->getName() . '"', 400);
         }
     }
 
