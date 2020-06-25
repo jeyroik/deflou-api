@@ -157,7 +157,7 @@ class CreateTriggerEventTest extends TestCase
     {
         $operation = $this->getOperation('.not.applicable.trigger');
 
-        $this->createWithSnuffRepo('anchorRepository', new Anchor([
+        $this->createWithSnuffRepo('deflouAnchorRepository', new Anchor([
             Anchor::FIELD__ID => 'test',
             Anchor::FIELD__EVENT_NAME => 'test_event',
             Anchor::FIELD__TYPE => Anchor::TYPE__GENERAL
@@ -184,6 +184,8 @@ class CreateTriggerEventTest extends TestCase
                 ]
             ]
         ]));
+
+        $operation();
 
         $this->assertArrayHasKey('notice', BufferLogger::$log);
         $this->assertEquals(
@@ -228,6 +230,8 @@ class CreateTriggerEventTest extends TestCase
             ]
         ]));
 
+        $operation();
+
         $this->assertArrayHasKey('notice', BufferLogger::$log);
         $this->assertEquals(
             'Can not apply trigger "test" to an event',
@@ -269,6 +273,8 @@ class CreateTriggerEventTest extends TestCase
                 ]
             ]
         ]));
+
+        $operation();
 
         $this->assertArrayHasKey('notice', BufferLogger::$log);
         $this->assertEquals(
@@ -328,6 +334,8 @@ class CreateTriggerEventTest extends TestCase
             ],
             Extension::FIELD__SUBJECT => 'extas.sample.parameter'
         ]));
+
+        $operation();
 
         $this->assertArrayHasKey('notice', BufferLogger::$log);
         $this->assertEquals(
