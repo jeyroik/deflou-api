@@ -408,6 +408,7 @@ class CreateTriggerEventTest extends TestCase
 
         $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
             Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__EVENT_NAME => 'test_event',
             Trigger::FIELD__ACTION_NAME => 'test_action',
             Trigger::FIELD__EVENT_PARAMETERS => []
         ]));
@@ -463,6 +464,7 @@ class CreateTriggerEventTest extends TestCase
 
         $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
             Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__EVENT_NAME => 'test_event',
             Trigger::FIELD__ACTION_NAME => 'test_action',
             Trigger::FIELD__EVENT_PARAMETERS => []
         ]));
@@ -508,6 +510,7 @@ class CreateTriggerEventTest extends TestCase
 
         $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
             Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__EVENT_NAME => 'test_event',
             Trigger::FIELD__ACTION_NAME => 'test_action',
             Trigger::FIELD__EVENT_PARAMETERS => []
         ]));
@@ -558,6 +561,7 @@ class CreateTriggerEventTest extends TestCase
 
         $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
             Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__EVENT_NAME => 'test_event',
             Trigger::FIELD__ACTION_NAME => 'test_action',
             Trigger::FIELD__EVENT_PARAMETERS => [
                 'test' => [
