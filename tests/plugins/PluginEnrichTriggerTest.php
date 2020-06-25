@@ -3,6 +3,7 @@ namespace tests\plugins;
 
 use deflou\components\applications\activities\Activity;
 use deflou\components\plugins\triggers\PluginEnrichTrigger;
+use deflou\components\plugins\triggers\PluginTriggerEnrich;
 use deflou\components\triggers\Trigger;
 use extas\components\conditions\Condition;
 use extas\components\conditions\ConditionNotEmpty;
@@ -10,6 +11,7 @@ use extas\components\conditions\ConditionRepository;
 use extas\components\parsers\Parser;
 use extas\components\parsers\ParserRepository;
 use extas\components\parsers\ParserSimpleReplace;
+use extas\components\repositories\TSnuffRepository;
 use extas\components\SystemContainer;
 use extas\interfaces\conditions\IConditionRepository;
 use extas\interfaces\parsers\IParserRepository;
@@ -25,8 +27,7 @@ use PHPUnit\Framework\TestCase;
  */
 class PluginEnrichTriggerTest extends TestCase
 {
-    protected ?IRepository $condRepo = null;
-    protected ?IRepository $parserRepo = null;
+    use TSnuffRepository;
 
     protected function setUp(): void
     {
@@ -34,24 +35,14 @@ class PluginEnrichTriggerTest extends TestCase
         $env = \Dotenv\Dotenv::create(getcwd() . '/tests/');
         $env->load();
 
-        $this->condRepo = new ConditionRepository();
-        $this->parserRepo = new ParserRepository();
-
-        SystemContainer::addItem(
-            IConditionRepository::class,
-            ConditionRepository::class
-        );
-
-        SystemContainer::addItem(
-            IParserRepository::class,
-            ParserRepository::class
-        );
+        $this->registerSnuffRepos([
+            'conditionRepository' => ConditionRepository::class
+        ]);
     }
 
     public function tearDown(): void
     {
-        $this->condRepo->delete([Condition::FIELD__NAME => 'not_empty']);
-        $this->parserRepo->delete([Parser::FIELD__CLASS => ParserSimpleReplace::class]);
+        $this->unregisterSnuffRepos();
     }
 
     public function testEnrich()
@@ -80,7 +71,7 @@ class PluginEnrichTriggerTest extends TestCase
             ]
         ]);
 
-        $this->condRepo->create(new Condition([
+        $this->createWithSnuffRepo('conditionRepository', new Condition([
             Condition::FIELD__NAME => 'not_empty',
             Condition::FIELD__CLASS => ConditionNotEmpty::class,
             Condition::FIELD__ALIASES => ['not_empty', '!@', '!null', '!empty']
@@ -111,8 +102,8 @@ class PluginEnrichTriggerTest extends TestCase
             ]
         ]));
 
-        $plugin = new PluginEnrichTrigger();
-        $plugin($action, $event, $trigger);
+        $plugin = new PluginTriggerEnrich([PluginTriggerEnrich::FIELD__ACTIVITY => $event]);
+        $plugin($trigger);
 
         $testEvent = $trigger->getActionParameter('test_event');
         $this->assertEquals('is ok', $testEvent->getValue());
