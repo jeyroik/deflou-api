@@ -1,56 +1,63 @@
 <?php
 namespace deflou\components\plugins\triggers;
 
-use deflou\components\applications\activities\events\EventTriggerLaunched;
 use deflou\interfaces\applications\activities\IActivity;
-use deflou\interfaces\applications\activities\IActivityRepository;
 use deflou\interfaces\applications\anchors\IAnchor;
-use deflou\interfaces\applications\anchors\IAnchorRepository;
 use deflou\interfaces\applications\IApplication;
-use deflou\interfaces\applications\IApplicationRepository;
-use deflou\interfaces\stages\IStageDeflouTriggerLaunched;
-use deflou\interfaces\triggers\ITrigger;
+use deflou\interfaces\stages\IStageTriggerLaunched;
 use deflou\interfaces\triggers\ITriggerResponse;
-use extas\components\plugins\Plugin;
-use extas\components\SystemContainer;
+use deflou\components\applications\activities\events\EventTriggerLaunched;
+use deflou\components\applications\activities\THasActivity;
+use deflou\components\triggers\THasTriggerObject;
+
 use extas\interfaces\repositories\IRepository;
-use GuzzleHttp\Client;
+use extas\components\exceptions\MissedOrUnknown;
+use extas\components\http\THasHttpIO;
+use extas\components\jsonrpc\THasJsonRpcRequest;
+use extas\components\jsonrpc\THasJsonRpcResponse;
+use extas\components\plugins\Plugin;
+
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
 /**
  * Class PluginTriggerLaunched
  *
+ * @method IRepository deflouApplicationRepository()
+ * @method IRepository deflouActivityRepository()
+ * @method IRepository deflouAnchorRepository()
+ * @method LoggerInterface logger()
+ * @method ClientInterface httpClient()
+ *
  * @package deflou\components\plugins\triggers
  * @author jeyroik@gmail.com
  */
-class PluginTriggerLaunched extends Plugin implements IStageDeflouTriggerLaunched
+class PluginTriggerLaunched extends Plugin implements IStageTriggerLaunched
 {
+    use THasHttpIO;
+    use THasJsonRpcRequest;
+    use THasJsonRpcResponse;
+    use THasActivity;
+    use THasTriggerObject;
+
     /**
-     * @param IActivity $action
-     * @param IActivity $event
-     * @param ITrigger $trigger
-     * @param IAnchor $anchor
-     * @param ITriggerResponse $response
-     * @throws \Exception
+     * @param ITriggerResponse $triggerResponse
+     * @throws GuzzleException
+     * @throws MissedOrUnknown
      */
-    public function __invoke(
-        IActivity $action,
-        IActivity $event,
-        ITrigger $trigger,
-        IAnchor $anchor,
-        ITriggerResponse $response
-    ): void
+    public function __invoke(ITriggerResponse $triggerResponse): void
     {
+        /**
+         * @var IAnchor $currentEventAnchor
+         * @var IApplication[] $deflouInstances
+         */
+        $trigger = $this->getTrigger();
         $newEvent = $this->getCurrentInstanceEventName();
         $owner = $trigger->getPlayer();
-        /**
-         * @var IRepository $repo
-         * @var IAnchor $currentEventAnchor
-         */
-        $repo = SystemContainer::getItem(IAnchorRepository::class);
-        $currentEventAnchor = $repo->one([
+        $anchor = $this->getActivity()->getParameterValue('anchor');
+        $currentEventAnchor = $this->deflouAnchorRepository()->one([
             IAnchor::FIELD__EVENT_NAME => $newEvent->getName(),
             IAnchor::FIELD__PLAYER_NAME => $owner->getName(),
             IAnchor::FIELD__TRIGGER_NAME => $trigger->getName()
@@ -60,35 +67,27 @@ class PluginTriggerLaunched extends Plugin implements IStageDeflouTriggerLaunche
          * This anchor also must be in a remote DeFlou instance
          */
         if (!$currentEventAnchor) {
-            throw new \Exception('Missed anchor for a trigger.launched event');
+            throw new MissedOrUnknown('anchor for a "trigger.launched" event');
         }
 
-        /**
-         * @var IRepository $appRepo
-         * @var IApplication[] $deflouInstances
-         */
-        $appRepo = SystemContainer::getItem(IApplicationRepository::class);
-        $deflouInstances = $appRepo->all([IApplication::FIELD__SAMPLE_NAME => 'deflou']);
-        $client = $this->getClient();
+        $deflouInstances = $this->deflouApplicationRepository()->all([IApplication::FIELD__SAMPLE_NAME => 'deflou']);
+        $client = $this->httpClient();
 
         foreach ($deflouInstances as $instance) {
-            $this->sendEvent($instance, $currentEventAnchor, $anchor, $trigger, $response, $client);
+            $this->sendEvent($instance, $currentEventAnchor, $triggerResponse, $client);
         }
     }
 
     /**
      * @param IApplication $instance
      * @param IAnchor $currentEventAnchor
-     * @param IAnchor $anchor
-     * @param ITrigger $trigger
      * @param ITriggerResponse $response
      * @param ClientInterface $client
+     * @throws GuzzleException
      */
     protected function sendEvent(
         IApplication $instance,
         IAnchor $currentEventAnchor,
-        IAnchor $anchor,
-        ITrigger $trigger,
         ITriggerResponse $response,
         ClientInterface $client
     ): void
@@ -99,7 +98,7 @@ class PluginTriggerLaunched extends Plugin implements IStageDeflouTriggerLaunche
         $url = $schema . $host . ':' . $port . '/api/jsonrpc';
         try {
             $client->request('post', $url, [
-                'json' => $this->getSendingData($trigger, $response, $anchor, $currentEventAnchor)
+                'json' => $this->getSendingData($response, $currentEventAnchor)
             ]);
         } catch (\Exception $e) {
             $this->failSendEvent($e, $instance);
@@ -107,18 +106,18 @@ class PluginTriggerLaunched extends Plugin implements IStageDeflouTriggerLaunche
     }
 
     /**
-     * @param $trigger
      * @param $response
-     * @param $anchor
      * @param $currentEventAnchor
      * @return array
      */
-    protected function getSendingData($trigger, $response, $anchor, $currentEventAnchor)
+    protected function getSendingData($response, $currentEventAnchor)
     {
         return [
-            EventTriggerLaunched::FIELD__TRIGGER_NAME => $trigger->getName(),
+            EventTriggerLaunched::FIELD__TRIGGER_NAME => $this->getTrigger()->getName(),
             EventTriggerLaunched::FIELD__TRIGGER_RESPONSE => $response->__toArray(),
-            EventTriggerLaunched::FIELD__ANCHOR => $anchor->__toArray(),
+            EventTriggerLaunched::FIELD__ANCHOR => $this->getActivity()
+                ->getParameterValue('anchor')
+                ->__toArray(),
             'anchor' => $currentEventAnchor->getId(),
             'version' => '2.0',
             'df_version' => getenv('DF__VERSION'),
@@ -130,16 +129,9 @@ class PluginTriggerLaunched extends Plugin implements IStageDeflouTriggerLaunche
      * @param $e
      * @param $instance
      */
-    protected function failSendEvent($e, $instance): void
+    protected function failSendEvent($e, IApplication $instance): void
     {
-        /**
-         * log
-         */
-    }
-
-    protected function getClient(): ClientInterface
-    {
-        return new Client();
+        $this->logger()->warning('Can not send "trigger.launched" event', $instance->__toArray());
     }
 
     /**
@@ -149,18 +141,14 @@ class PluginTriggerLaunched extends Plugin implements IStageDeflouTriggerLaunche
     protected function getCurrentInstanceEventName(): IActivity
     {
         $app = $this->getCurrentInstanceApplication();
-        /**
-         * @var IRepository $repo
-         */
-        $repo = SystemContainer::getItem(IActivityRepository::class);
-        $event = $repo->one([
+        $event = $this->deflouActivityRepository()->one([
             IActivity::FIELD__SAMPLE_NAME => 'trigger.launched',
             IActivity::FIELD__APPLICATION_NAME => $app->getName(),
             IActivity::FIELD__TYPE => IActivity::TYPE__EVENT
         ]);
 
         if (!$event) {
-            throw new \Exception('Missed event trigger.launched for the current instance');
+            throw new MissedOrUnknown('event "trigger.launched" for the current instance');
         }
 
         return $event;
@@ -168,19 +156,15 @@ class PluginTriggerLaunched extends Plugin implements IStageDeflouTriggerLaunche
 
     /**
      * @return IApplication
-     * @throws \Exception
+     * @throws MissedOrUnknown
      */
     protected function getCurrentInstanceApplication(): IApplication
     {
-        /**
-         * @var IRepository $repo
-         */
         $appName = getenv('DF__APP_NAME');
-        $repo = SystemContainer::getItem(IApplicationRepository::class);
-        $app = $repo->one([IApplication::FIELD__NAME => $appName]);
+        $app = $this->deflouApplicationRepository()->one([IApplication::FIELD__NAME => $appName]);
 
         if (!$app) {
-            throw new \Exception('Missed current instance application (' . $appName . ')');
+            throw new MissedOrUnknown('current instance application "' . $appName . '"');
         }
 
         return $app;

@@ -13,46 +13,43 @@ use deflou\components\applications\Application;
 use deflou\components\applications\ApplicationRepository;
 use deflou\components\applications\ApplicationSampleRepository;
 use deflou\components\jsonrpc\operations\CreateTriggerEvent;
+use deflou\components\plugins\triggers\PluginTriggerApplicable;
+use deflou\components\plugins\triggers\PluginTriggerApplicableNot;
+use deflou\components\plugins\triggers\PluginTriggerEnrich;
+use deflou\components\plugins\triggers\PluginTriggerEvent;
+use deflou\components\plugins\triggers\PluginTriggerLaunched;
+use deflou\components\plugins\triggers\PluginTriggerRun;
+use deflou\components\plugins\triggers\PluginTriggerTriggers;
 use deflou\components\triggers\Trigger;
 use deflou\components\triggers\TriggerRepository;
-use deflou\components\triggers\TriggerResponse;
 use deflou\components\triggers\TriggerResponseRepository;
-use deflou\interfaces\applications\activities\IActivity;
-use deflou\interfaces\applications\activities\IActivityRepository;
-use deflou\interfaces\applications\activities\IActivitySampleRepository;
-use deflou\interfaces\applications\anchors\IAnchorRepository;
-use deflou\interfaces\applications\IApplicationRepository;
-use deflou\interfaces\applications\IApplicationSampleRepository;
-use deflou\interfaces\stages\IStageDeFlouTriggerEnrich;
-use deflou\interfaces\stages\IStageDeflouTriggerLaunched;
-use deflou\interfaces\triggers\ITrigger;
-use deflou\interfaces\triggers\ITriggerRepository;
-use deflou\interfaces\triggers\ITriggerResponseRepository;
-use Dotenv\Dotenv;
+use deflou\interfaces\stages\IStageTriggerApplicable;
+use deflou\interfaces\stages\IStageTriggerApplicableNot;
+use deflou\interfaces\stages\IStageTriggerEnrich;
+use deflou\interfaces\stages\IStageTriggerEvent;
+use deflou\interfaces\stages\IStageTriggerLaunched;
+
+use deflou\interfaces\stages\IStageTriggerRun;
+use deflou\interfaces\stages\IStageTriggerTriggers;
 use extas\components\conditions\Condition;
 use extas\components\conditions\ConditionEqual;
 use extas\components\conditions\ConditionRepository;
 use extas\components\extensions\Extension;
 use extas\components\extensions\ExtensionHasCondition;
-use extas\components\extensions\ExtensionRepository;
 use extas\components\extensions\TSnuffExtensions;
 use extas\components\http\TSnuffHttp;
-use extas\components\players\Player;
 use extas\components\players\PlayerRepository;
 use extas\components\plugins\Plugin;
-use extas\components\plugins\PluginRepository;
-use extas\interfaces\conditions\ICondition;
-use extas\interfaces\conditions\IConditionRepository;
+use extas\components\plugins\TSnuffPlugins;
+use extas\components\repositories\TSnuffRepository;
 use extas\interfaces\conditions\IHasCondition;
 use extas\interfaces\extensions\IExtensionHasCondition;
 use extas\interfaces\jsonrpc\IResponse;
 use extas\interfaces\jsonrpc\operations\IOperationDispatcher;
-use extas\interfaces\players\IPlayerRepository;
-use extas\interfaces\repositories\IRepository;
 use extas\interfaces\samples\parameters\ISampleParameter;
+
+use Dotenv\Dotenv;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use tests\ActionWithException;
 use tests\PluginEnrichWithException;
 use tests\PluginLaunchedWithException;
@@ -67,73 +64,472 @@ class CreateTriggerEventTest extends TestCase
 {
     use TSnuffHttp;
     use TSnuffExtensions;
-
-    protected ?IRepository $playerRepo = null;
-    protected ?IRepository $anchorRepo = null;
-    protected ?IRepository $appRepo = null;
-    protected ?IRepository $activityRepo = null;
-    protected ?IRepository $triggerRepo = null;
-    protected ?IRepository $pluginRepo = null;
-    protected ?IRepository $triggersResponsesRepo = null;
-    protected ?IRepository $condRepo = null;
-    protected ?IRepository $extRepo = null;
+    use TSnuffPlugins;
+    use TSnuffRepository;
 
     protected function setUp(): void
     {
         parent::setUp();
         $env = Dotenv::create(getcwd() . '/tests/');
         $env->load();
-
-        $this->anchorRepo = new AnchorRepository();
-        $this->appRepo = new ApplicationRepository();
-        $this->activityRepo = new ActivityRepository();
-        $this->playerRepo = new PlayerRepository();
-        $this->triggersResponsesRepo = new TriggerResponseRepository();
-        $this->triggerRepo = new TriggerRepository();
-        $this->condRepo = new ConditionRepository();
-        $this->extRepo = new ExtensionRepository();
-        $this->pluginRepo = new class extends PluginRepository {
-            public function reload()
-            {
-                parent::$stagesWithPlugins = [];
-            }
-        };
-
-        $this->addReposForExt([
-            IConditionRepository::class => ConditionRepository::class,
-            IAnchorRepository::class => AnchorRepository::class,
+        $this->registerSnuffRepos([
+            'conditionRepository' => ConditionRepository::class,
             'anchorRepository' => AnchorRepository::class,
-            IApplicationRepository::class => ApplicationRepository::class,
-            IApplicationSampleRepository::class => ApplicationSampleRepository::class,
-            IActivityRepository::class => ActivityRepository::class,
-            IActivitySampleRepository::class => ActivitySampleRepository::class,
-            ITriggerRepository::class => TriggerRepository::class,
-            'triggerRepository' => TriggerRepository::class,
-            IPlayerRepository::class => PlayerRepository::class,
-            ITriggerResponseRepository::class => TriggerResponseRepository::class
-        ]);
-        $this->createRepoExt([
-            'anchorRepository', 'triggerRepository'
+            'deflouApplicationRepository' => ApplicationRepository::class,
+            'deflouApplicationSampleRepository' => ApplicationSampleRepository::class,
+            'deflouActivityRepository' => ActivityRepository::class,
+            'deflouActivitySampleRepository' => ActivitySampleRepository::class,
+            'deflouTriggerRepository' => TriggerRepository::class,
+            'playerRepository' => PlayerRepository::class,
+            'deflouTriggerResponseRepository' => TriggerResponseRepository::class
         ]);
     }
 
     public function tearDown(): void
     {
-        $this->anchorRepo->delete([Anchor::FIELD__ID => 'test']);
-        $this->appRepo->delete([Application::FIELD__SAMPLE_NAME => 'test_app']);
-        $this->activityRepo->delete([Activity::FIELD__NAME => ['test_event', 'test_action']]);
-        $this->playerRepo->delete([Player::FIELD__NAME => 'test']);
-        $this->triggerRepo->delete([ITrigger::FIELD__NAME => 'test']);
-        $this->triggersResponsesRepo->delete([TriggerResponse::FIELD__PLAYER_NAME => 'test_player']);
-        $this->pluginRepo->delete([
-            Plugin::FIELD__CLASS => [
-                PluginEnrichWithException::class,
-                PluginLaunchedWithException::class
+        $this->unregisterSnuffRepos();
+    }
+
+    public function testMissedAnchor()
+    {
+        $operation = $this->getOperation('.missed.anchor');
+        $this->responseHasError($operation, $this->getError(400, 'Missed or unknown anchor ""'));
+    }
+
+    public function testUnknownAnchor()
+    {
+        $operation = $this->getOperation('.unknown.anchor');
+        $this->responseHasError($operation, $this->getError(400, 'Missed or unknown anchor "unknown"'));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testUnknownEvent()
+    {
+        $operation = $this->getOperation('.unknown.event');
+
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
+            Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'unknown'
+        ]));
+
+        $this->responseHasError($operation, $this->getError(400, 'Missed or unknown event "unknown"'));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testRunEventDispatcher()
+    {
+        $operation = $this->getOperation('.missed.anchor.parameter');
+
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
+            Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event'
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_event',
+            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__CLASS => EventTriggerLaunched::class
+        ]));
+
+        $this->responseHasError($operation, $this->getError(
+            400,
+            'Missed "' . EventTriggerLaunched::FIELD__ANCHOR . '" parameter'
+        ));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testAnchorGeneralType()
+    {
+        $operation = $this->getOperation('.not.applicable.trigger');
+
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
+            Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
+            Anchor::FIELD__TYPE => Anchor::TYPE__GENERAL
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_event',
+            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__CLASS => EventNothing::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
+            Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__EVENT_NAME => 'test_event',
+            Trigger::FIELD__EVENT_PARAMETERS => [
+                'test' => [
+                    ISampleParameter::FIELD__NAME => 'test'
+                ]
             ]
-        ]);
-        $this->condRepo->delete([ICondition::FIELD__NAME => 'eq']);
-        $this->extRepo->delete([Extension::FIELD__CLASS => ExtensionHasCondition::class]);
-        $this->deleteSnuffExtensions();
+        ]));
+
+        $this->responseHasError($operation, $this->getError(
+            400,
+            'Not applicable trigger "test"'
+        ));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testAnchorPlayerType()
+    {
+        $operation = $this->getOperation('.not.applicable.trigger');
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
+            Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
+            Anchor::FIELD__PLAYER_NAME => 'test_player',
+            Anchor::FIELD__TYPE => Anchor::TYPE__PLAYER
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_event',
+            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__CLASS => EventNothing::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
+            Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__EVENT_NAME => 'test_event',
+            Trigger::FIELD__PLAYER_NAME => 'test_player',
+            Trigger::FIELD__EVENT_PARAMETERS => [
+                'test' => [
+                    ISampleParameter::FIELD__NAME => 'test'
+                ]
+            ]
+        ]));
+
+        $this->responseHasError($operation, $this->getError(
+            400,
+            'Not applicable trigger "test"'
+        ));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testAnchorTriggerType()
+    {
+        $operation = $this->getOperation('.not.applicable.trigger');
+
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
+            Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
+            Anchor::FIELD__TRIGGER_NAME => 'test',
+            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_event',
+            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__CLASS => EventNothing::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
+            Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__EVENT_PARAMETERS => [
+                'test' => [
+                    ISampleParameter::FIELD__NAME => 'test'
+                ]
+            ]
+        ]));
+
+        $this->responseHasError($operation, $this->getError(
+            400,
+            'Not applicable trigger "test"'
+        ));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testEventConditionFailed()
+    {
+        $operation = $this->getOperation('.not.applicable.trigger');
+
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
+            Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
+            Anchor::FIELD__TRIGGER_NAME => 'test',
+            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_event',
+            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__CLASS => EventNothing::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
+            Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__EVENT_PARAMETERS => [
+                'test' => [
+                    ISampleParameter::FIELD__NAME => 'test',
+                    IHasCondition::FIELD__CONDITION => '=',
+                    IHasCondition::FIELD__VALUE => 6
+                ]
+            ]
+        ]));
+
+        $this->createWithSnuffRepo('conditionRepository', new Condition([
+            Condition::FIELD__NAME => 'eq',
+            Condition::FIELD__ALIASES => ['eq', '='],
+            Condition::FIELD__CLASS => ConditionEqual::class
+        ]));
+
+        $this->createWithSnuffRepo('extensionRepository', new Extension([
+            Extension::FIELD__CLASS => ExtensionHasCondition::class,
+            Extension::FIELD__INTERFACE => IExtensionHasCondition::class,
+            Extension::FIELD__METHODS => [
+                "isConditionTrue", "getCondition", "getConditionName", "setConditionName"
+            ],
+            Extension::FIELD__SUBJECT => 'extas.sample.parameter'
+        ]));
+
+        $this->responseHasError($operation, $this->getError(
+            400,
+            'Not applicable trigger "test"'
+        ));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testMissedAction()
+    {
+        $operation = $this->getOperation('.not.applicable.trigger');
+
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
+            Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
+            Anchor::FIELD__TRIGGER_NAME => 'test',
+            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_event',
+            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__CLASS => EventNothing::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
+            Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__ACTION_NAME => 'unknown',
+            Trigger::FIELD__EVENT_PARAMETERS => []
+        ]));
+
+        $this->responseHasError($operation, $this->getError(
+            400,
+            'Missed or unknown action "unknown"'
+        ));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testEnrichTrigger()
+    {
+        $operation = $this->getOperation('.not.applicable.trigger');
+
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
+            Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
+            Anchor::FIELD__TRIGGER_NAME => 'test',
+            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_event',
+            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__CLASS => EventNothing::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_action',
+            Activity::FIELD__TYPE => Activity::TYPE__ACTION,
+            Activity::FIELD__CLASS => ActionNothing::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
+            Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__ACTION_NAME => 'test_action',
+            Trigger::FIELD__EVENT_PARAMETERS => []
+        ]));
+
+        $this->createWithSnuffRepo('pluginRepository', new Plugin([
+            Plugin::FIELD__CLASS => PluginEnrichWithException::class,
+            Plugin::FIELD__STAGE => IStageTriggerEnrich::NAME
+        ]));
+
+        $this->responseHasError($operation, $this->getError(
+            400,
+            PluginEnrichWithException::EXCEPTION__MESSAGE
+        ));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testActionDispatcher()
+    {
+        $operation = $this->getOperation('.not.applicable.trigger');
+
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
+            Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
+            Anchor::FIELD__TRIGGER_NAME => 'test',
+            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_event',
+            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__CLASS => EventNothing::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_action',
+            Activity::FIELD__TYPE => Activity::TYPE__ACTION,
+            Activity::FIELD__CLASS => ActionWithException::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
+            Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__ACTION_NAME => 'test_action',
+            Trigger::FIELD__EVENT_PARAMETERS => []
+        ]));
+
+        $this->responseHasError($operation, $this->getError(
+            400,
+            ActionWithException::EXCEPTION__MESSAGE
+        ));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testActionLaunchedStage()
+    {
+        $operation = $this->getOperation('.not.applicable.trigger');
+
+        $this->createWithSnuffRepo('deflouApplicationRepository', new Application([
+            Application::FIELD__NAME => 'test_app',
+            Application::FIELD__SAMPLE_NAME => 'test'
+        ]));
+
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
+            Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
+            Anchor::FIELD__TRIGGER_NAME => 'test',
+            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_event',
+            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__APPLICATION_NAME => 'test_app',
+            Activity::FIELD__CLASS => EventNothing::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_action',
+            Activity::FIELD__TYPE => Activity::TYPE__ACTION,
+            Activity::FIELD__APPLICATION_NAME => 'test_app',
+            Activity::FIELD__CLASS => ActionNothing::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
+            Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__ACTION_NAME => 'test_action',
+            Trigger::FIELD__EVENT_PARAMETERS => []
+        ]));
+
+        $this->createWithSnuffRepo('pluginRepository', new Plugin([
+            Plugin::FIELD__CLASS => PluginLaunchedWithException::class,
+            Plugin::FIELD__STAGE => IStageTriggerLaunched::NAME
+        ]));
+
+        $this->responseHasError($operation, $this->getError(
+            400,
+            PluginLaunchedWithException::EXCEPTION__MESSAGE
+        ));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testEverythingIsOk()
+    {
+        $operation = $this->getOperation('.applicable.trigger');
+
+        $this->createWithSnuffRepo('deflouApplicationRepository', new Application([
+            Application::FIELD__NAME => 'test_app',
+            Application::FIELD__SAMPLE_NAME => 'test'
+        ]));
+
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
+            Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
+            Anchor::FIELD__TRIGGER_NAME => 'test',
+            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_event',
+            Activity::FIELD__APPLICATION_NAME => 'test_app',
+            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__CLASS => EventNothing::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_action',
+            Activity::FIELD__APPLICATION_NAME => 'test_app',
+            Activity::FIELD__TYPE => Activity::TYPE__ACTION,
+            Activity::FIELD__CLASS => ActionNothing::class
+        ]));
+
+        $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
+            Trigger::FIELD__NAME => 'test',
+            Trigger::FIELD__ACTION_NAME => 'test_action',
+            Trigger::FIELD__EVENT_PARAMETERS => [
+                'test' => [
+                    ISampleParameter::FIELD__NAME => 'test',
+                    IHasCondition::FIELD__CONDITION => '=',
+                    IHasCondition::FIELD__VALUE => 5
+                ]
+            ]
+        ]));
+
+        $this->createWithSnuffRepo('conditionRepository', new Condition([
+            Condition::FIELD__NAME => 'eq',
+            Condition::FIELD__CLASS => ConditionEqual::class,
+            Condition::FIELD__ALIASES => ['eq', '=']
+        ]));
+
+        $this->createWithSnuffRepo('extensionRepository', new Extension([
+            Extension::FIELD__CLASS => ExtensionHasCondition::class,
+            Extension::FIELD__INTERFACE => IExtensionHasCondition::class,
+            Extension::FIELD__METHODS => [
+                "isConditionTrue", "getCondition", "getConditionName", "setConditionName"
+            ],
+            Extension::FIELD__SUBJECT => 'extas.sample.parameter'
+        ]));
+
+        $response = $operation();
+
+        $jsonRpcResponse = $this->getJsonRpcResponse($response);
+        $this->assertFalse(isset($jsonRpcResponse[IResponse::RESPONSE__ERROR]));
+
+        $response = $this->getResponseMockData();
+        $response[IResponse::RESPONSE__RESULT] = [];
+        $this->assertEquals($response, $jsonRpcResponse);
     }
 
     /**
@@ -163,475 +559,23 @@ class CreateTriggerEventTest extends TestCase
     }
 
     /**
-     * @param RequestInterface $request
-     * @param ResponseInterface $response
+     * @param string $requestSuffix
      * @return IOperationDispatcher
      */
-    protected function getOperation(RequestInterface $request, ResponseInterface $response): IOperationDispatcher
+    protected function getOperation(string $requestSuffix = ''): IOperationDispatcher
     {
-        return new class ([
-            CreateTriggerEvent::FIELD__PSR_REQUEST => $request,
-            CreateTriggerEvent::FIELD__PSR_RESPONSE => $response
-        ]) extends CreateTriggerEvent {
-            protected function notApplicableTrigger(ITrigger $trigger, IActivity $event): void
-            {
-                throw new \Exception('Not applicable trigger "' . $trigger->getName() . '"');
-            }
-        };
-    }
-
-    public function testMissedAnchor()
-    {
-        $operation = new CreateTriggerEvent([
-            CreateTriggerEvent::FIELD__PSR_REQUEST => $this->getPsrRequest('.missed.anchor'),
+        $this->createSnuffPlugin(PluginTriggerApplicable::class, [IStageTriggerApplicable::NAME]);
+        $this->createSnuffPlugin(PluginTriggerApplicableNot::class, [IStageTriggerApplicableNot::NAME]);
+        $this->createSnuffPlugin(PluginTriggerEnrich::class, [IStageTriggerEnrich::NAME]);
+        $this->createSnuffPlugin(PluginTriggerEvent::class, [IStageTriggerEvent::NAME]);
+        $this->createSnuffPlugin(PluginTriggerLaunched::class, [IStageTriggerLaunched::NAME]);
+        $this->createSnuffPlugin(PluginTriggerRun::class, [IStageTriggerRun::NAME]);
+        $this->createSnuffPlugin(PluginTriggerTriggers::class, [IStageTriggerTriggers::NAME]);
+        
+        return new CreateTriggerEvent([
+            CreateTriggerEvent::FIELD__PSR_REQUEST => $this->getPsrRequest($requestSuffix),
             CreateTriggerEvent::FIELD__PSR_RESPONSE => $this->getPsrResponse()
         ]);
-
-        $this->responseHasError($operation, $this->getError(400, 'Unknown anchor ""'));
-    }
-
-    public function testUnknownAnchor()
-    {
-        $operation = new CreateTriggerEvent([
-            CreateTriggerEvent::FIELD__PSR_REQUEST => $this->getPsrRequest('.unknown.anchor'),
-            CreateTriggerEvent::FIELD__PSR_RESPONSE => $this->getPsrResponse()
-        ]);
-
-        $this->responseHasError($operation, $this->getError(400, 'Unknown anchor "unknown"'));
-    }
-
-    public function testUnknownEvent()
-    {
-        $operation = new CreateTriggerEvent([
-            CreateTriggerEvent::FIELD__PSR_REQUEST => $this->getPsrRequest('.unknown.event'),
-            CreateTriggerEvent::FIELD__PSR_RESPONSE => $this->getPsrResponse()
-        ]);
-
-        $this->anchorRepo->create(new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'unknown'
-        ]));
-
-        $this->responseHasError($operation, $this->getError(400, 'Missed event "unknown"'));
-    }
-
-    public function testRunEventDispatcher()
-    {
-        $operation = new CreateTriggerEvent([
-            CreateTriggerEvent::FIELD__PSR_REQUEST => $this->getPsrRequest('.missed.anchor.parameter'),
-            CreateTriggerEvent::FIELD__PSR_RESPONSE => $this->getPsrResponse()
-        ]);
-
-        $this->anchorRepo->create(new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event'
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__CLASS => EventTriggerLaunched::class
-        ]));
-
-        $this->responseHasError($operation, $this->getError(
-            400,
-            'Missed "' . EventTriggerLaunched::FIELD__ANCHOR . '" parameter'
-        ));
-    }
-
-    public function testAnchorGeneralType()
-    {
-        $operation = $this->getOperation(
-            $this->getPsrRequest('.not.applicable.trigger'),
-            $this->getPsrResponse()
-        );
-
-        $this->anchorRepo->create(new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event',
-            Anchor::FIELD__TYPE => Anchor::TYPE__GENERAL
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__CLASS => EventNothing::class
-        ]));
-
-        $this->triggerRepo->create(new Trigger([
-            Trigger::FIELD__NAME => 'test',
-            Trigger::FIELD__EVENT_NAME => 'test_event',
-            Trigger::FIELD__EVENT_PARAMETERS => [
-                'test' => [
-                    ISampleParameter::FIELD__NAME => 'test'
-                ]
-            ]
-        ]));
-
-        $this->responseHasError($operation, $this->getError(
-            400,
-            'Not applicable trigger "test"'
-        ));
-    }
-
-    public function testAnchorPlayerType()
-    {
-        $operation = $this->getOperation(
-            $this->getPsrRequest('.not.applicable.trigger'),
-            $this->getPsrResponse()
-        );
-        $this->anchorRepo->create(new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event',
-            Anchor::FIELD__PLAYER_NAME => 'test_player',
-            Anchor::FIELD__TYPE => Anchor::TYPE__PLAYER
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__CLASS => EventNothing::class
-        ]));
-
-        $this->triggerRepo->create(new Trigger([
-            Trigger::FIELD__NAME => 'test',
-            Trigger::FIELD__EVENT_NAME => 'test_event',
-            Trigger::FIELD__PLAYER_NAME => 'test_player',
-            Trigger::FIELD__EVENT_PARAMETERS => [
-                'test' => [
-                    ISampleParameter::FIELD__NAME => 'test'
-                ]
-            ]
-        ]));
-
-        $this->responseHasError($operation, $this->getError(
-            400,
-            'Not applicable trigger "test"'
-        ));
-    }
-
-    public function testAnchorTriggerType()
-    {
-        $operation = $this->getOperation(
-            $this->getPsrRequest('.not.applicable.trigger'),
-            $this->getPsrResponse()
-        );
-
-        $this->anchorRepo->create(new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event',
-            Anchor::FIELD__TRIGGER_NAME => 'test',
-            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__CLASS => EventNothing::class
-        ]));
-
-        $this->triggerRepo->create(new Trigger([
-            Trigger::FIELD__NAME => 'test',
-            Trigger::FIELD__EVENT_PARAMETERS => [
-                'test' => [
-                    ISampleParameter::FIELD__NAME => 'test'
-                ]
-            ]
-        ]));
-
-        $this->responseHasError($operation, $this->getError(
-            400,
-            'Not applicable trigger "test"'
-        ));
-    }
-
-    public function testEventConditionFailed()
-    {
-        $operation = $this->getOperation(
-            $this->getPsrRequest('.not.applicable.trigger'),
-            $this->getPsrResponse()
-        );
-
-        $this->anchorRepo->create(new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event',
-            Anchor::FIELD__TRIGGER_NAME => 'test',
-            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__CLASS => EventNothing::class
-        ]));
-
-        $this->triggerRepo->create(new Trigger([
-            Trigger::FIELD__NAME => 'test',
-            Trigger::FIELD__EVENT_PARAMETERS => [
-                'test' => [
-                    ISampleParameter::FIELD__NAME => 'test',
-                    IHasCondition::FIELD__CONDITION => '=',
-                    IHasCondition::FIELD__VALUE => 6
-                ]
-            ]
-        ]));
-
-        $this->condRepo->create(new Condition([
-            Condition::FIELD__NAME => 'eq',
-            Condition::FIELD__ALIASES => ['eq', '='],
-            Condition::FIELD__CLASS => ConditionEqual::class
-        ]));
-
-        $this->extRepo->create(new Extension([
-            Extension::FIELD__CLASS => ExtensionHasCondition::class,
-            Extension::FIELD__INTERFACE => IExtensionHasCondition::class,
-            Extension::FIELD__METHODS => [
-                "isConditionTrue", "getCondition", "getConditionName", "setConditionName"
-            ],
-            Extension::FIELD__SUBJECT => 'extas.sample.parameter'
-        ]));
-
-        $this->responseHasError($operation, $this->getError(
-            400,
-            'Not applicable trigger "test"'
-        ));
-    }
-
-    public function testMissedAction()
-    {
-        $operation = $this->getOperation(
-            $this->getPsrRequest('.not.applicable.trigger'),
-            $this->getPsrResponse()
-        );
-
-        $this->anchorRepo->create(new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event',
-            Anchor::FIELD__TRIGGER_NAME => 'test',
-            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__CLASS => EventNothing::class
-        ]));
-
-        $this->triggerRepo->create(new Trigger([
-            Trigger::FIELD__NAME => 'test',
-            Trigger::FIELD__ACTION_NAME => 'unknown',
-            Trigger::FIELD__EVENT_PARAMETERS => []
-        ]));
-
-        $this->responseHasError($operation, $this->getError(
-            400,
-            'Missed action "unknown"'
-        ));
-    }
-
-    public function testEnrichTrigger()
-    {
-        $operation = $this->getOperation(
-            $this->getPsrRequest('.not.applicable.trigger'),
-            $this->getPsrResponse()
-        );
-
-        $this->anchorRepo->create(new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event',
-            Anchor::FIELD__TRIGGER_NAME => 'test',
-            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__CLASS => EventNothing::class
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_action',
-            Activity::FIELD__TYPE => Activity::TYPE__ACTION,
-            Activity::FIELD__CLASS => ActionNothing::class
-        ]));
-
-        $this->triggerRepo->create(new Trigger([
-            Trigger::FIELD__NAME => 'test',
-            Trigger::FIELD__ACTION_NAME => 'test_action',
-            Trigger::FIELD__EVENT_PARAMETERS => []
-        ]));
-
-        $this->pluginRepo->create(new Plugin([
-            Plugin::FIELD__CLASS => PluginEnrichWithException::class,
-            Plugin::FIELD__STAGE => IStageDeFlouTriggerEnrich::NAME
-        ]));
-
-        $this->responseHasError($operation, $this->getError(
-            400,
-            PluginEnrichWithException::EXCEPTION__MESSAGE
-        ));
-    }
-
-    public function testActionDispatcher()
-    {
-        $operation = $this->getOperation(
-            $this->getPsrRequest('.not.applicable.trigger'),
-            $this->getPsrResponse()
-        );
-
-        $this->anchorRepo->create(new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event',
-            Anchor::FIELD__TRIGGER_NAME => 'test',
-            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__CLASS => EventNothing::class
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_action',
-            Activity::FIELD__TYPE => Activity::TYPE__ACTION,
-            Activity::FIELD__CLASS => ActionWithException::class
-        ]));
-
-        $this->triggerRepo->create(new Trigger([
-            Trigger::FIELD__NAME => 'test',
-            Trigger::FIELD__ACTION_NAME => 'test_action',
-            Trigger::FIELD__EVENT_PARAMETERS => []
-        ]));
-
-        $this->pluginRepo->reload();
-
-        $this->responseHasError($operation, $this->getError(
-            400,
-            ActionWithException::EXCEPTION__MESSAGE
-        ));
-    }
-
-    public function testActionLaunchedStage()
-    {
-        $operation = $this->getOperation(
-            $this->getPsrRequest('.not.applicable.trigger'),
-            $this->getPsrResponse()
-        );
-
-        $this->appRepo->create(new Application([
-            Application::FIELD__NAME => 'test_app',
-            Application::FIELD__SAMPLE_NAME => 'test'
-        ]));
-
-        $this->anchorRepo->create(new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event',
-            Anchor::FIELD__TRIGGER_NAME => 'test',
-            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__APPLICATION_NAME => 'test_app',
-            Activity::FIELD__CLASS => EventNothing::class
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_action',
-            Activity::FIELD__TYPE => Activity::TYPE__ACTION,
-            Activity::FIELD__APPLICATION_NAME => 'test_app',
-            Activity::FIELD__CLASS => ActionNothing::class
-        ]));
-
-        $this->triggerRepo->create(new Trigger([
-            Trigger::FIELD__NAME => 'test',
-            Trigger::FIELD__ACTION_NAME => 'test_action',
-            Trigger::FIELD__EVENT_PARAMETERS => []
-        ]));
-
-        $this->pluginRepo->create(new Plugin([
-            Plugin::FIELD__CLASS => PluginLaunchedWithException::class,
-            Plugin::FIELD__STAGE => IStageDeflouTriggerLaunched::NAME
-        ]));
-
-        $this->pluginRepo->reload();
-        $this->responseHasError($operation, $this->getError(
-            400,
-            PluginLaunchedWithException::EXCEPTION__MESSAGE
-        ));
-    }
-
-    public function testEverythingIsOk()
-    {
-        $operation = $this->getOperation(
-            $this->getPsrRequest('.applicable.trigger'),
-            $this->getPsrResponse()
-        );
-
-        $this->appRepo->create(new Application([
-            Application::FIELD__NAME => 'test_app',
-            Application::FIELD__SAMPLE_NAME => 'test'
-        ]));
-
-        $this->anchorRepo->create(new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event',
-            Anchor::FIELD__TRIGGER_NAME => 'test',
-            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__APPLICATION_NAME => 'test_app',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__CLASS => EventNothing::class
-        ]));
-
-        $this->activityRepo->create(new Activity([
-            Activity::FIELD__NAME => 'test_action',
-            Activity::FIELD__APPLICATION_NAME => 'test_app',
-            Activity::FIELD__TYPE => Activity::TYPE__ACTION,
-            Activity::FIELD__CLASS => ActionNothing::class
-        ]));
-
-        $this->triggerRepo->create(new Trigger([
-            Trigger::FIELD__NAME => 'test',
-            Trigger::FIELD__ACTION_NAME => 'test_action',
-            Trigger::FIELD__EVENT_PARAMETERS => [
-                'test' => [
-                    ISampleParameter::FIELD__NAME => 'test',
-                    IHasCondition::FIELD__CONDITION => '=',
-                    IHasCondition::FIELD__VALUE => 5
-                ]
-            ]
-        ]));
-
-        $this->condRepo->create(new Condition([
-            Condition::FIELD__NAME => 'eq',
-            Condition::FIELD__CLASS => ConditionEqual::class,
-            Condition::FIELD__ALIASES => ['eq', '=']
-        ]));
-
-        $this->extRepo->create(new Extension([
-            Extension::FIELD__CLASS => ExtensionHasCondition::class,
-            Extension::FIELD__INTERFACE => IExtensionHasCondition::class,
-            Extension::FIELD__METHODS => [
-                "isConditionTrue", "getCondition", "getConditionName", "setConditionName"
-            ],
-            Extension::FIELD__SUBJECT => 'extas.sample.parameter'
-        ]));
-
-        $this->pluginRepo->reload();
-        $response = $operation();
-
-        $jsonRpcResponse = $this->getJsonRpcResponse($response);
-        $this->assertFalse(isset($jsonRpcResponse[IResponse::RESPONSE__ERROR]));
-
-        $response = $this->getResponseMockData();
-        $response[IResponse::RESPONSE__RESULT] = [];
-        $this->assertEquals($response, $jsonRpcResponse);
     }
 
     /**
