@@ -77,6 +77,10 @@ class CreateTriggerEventTest extends TestCase
         parent::setUp();
         $env = Dotenv::create(getcwd() . '/tests/');
         $env->load();
+        $this->createSnuffDynamicRepositories([
+            ['loggers', 'name', Logger::class]
+        ]);
+        
         $this->registerSnuffRepos([
             'conditionRepository' => ConditionRepository::class,
             'anchorRepository' => AnchorRepository::class,
@@ -88,10 +92,6 @@ class CreateTriggerEventTest extends TestCase
             'playerRepository' => PlayerRepository::class,
             'deflouTriggerResponseRepository' => TriggerResponseRepository::class,
             'pluginRepository' => PluginRepository::class
-        ]);
-
-        $this->createSnuffDynamicRepositories([
-            ['loggers', 'name', Logger::class]
         ]);
 
         $this->createWithSnuffRepo('extensionRepository', new Extension([
