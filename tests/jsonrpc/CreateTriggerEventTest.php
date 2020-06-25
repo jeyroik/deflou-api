@@ -36,12 +36,16 @@ use extas\components\conditions\ConditionEqual;
 use extas\components\conditions\ConditionRepository;
 use extas\components\extensions\Extension;
 use extas\components\extensions\ExtensionHasCondition;
+use extas\components\extensions\ExtensionLogger;
+use extas\components\extensions\ExtensionRepository;
 use extas\components\extensions\TSnuffExtensions;
 use extas\components\http\TSnuffHttp;
+use extas\components\loggers\Logger;
 use extas\components\players\PlayerRepository;
 use extas\components\plugins\Plugin;
 use extas\components\plugins\TSnuffPlugins;
 use extas\components\repositories\TSnuffRepository;
+use extas\components\repositories\TSnuffRepositoryDynamic;
 use extas\interfaces\conditions\IHasCondition;
 use extas\interfaces\extensions\IExtensionHasCondition;
 use extas\interfaces\jsonrpc\IResponse;
@@ -65,7 +69,7 @@ class CreateTriggerEventTest extends TestCase
     use TSnuffHttp;
     use TSnuffExtensions;
     use TSnuffPlugins;
-    use TSnuffRepository;
+    use TSnuffRepositoryDynamic;
 
     protected function setUp(): void
     {
@@ -83,11 +87,21 @@ class CreateTriggerEventTest extends TestCase
             'playerRepository' => PlayerRepository::class,
             'deflouTriggerResponseRepository' => TriggerResponseRepository::class
         ]);
+
+        $this->createSnuffDynamicRepositories([
+            ['loggers', 'name', Logger::class]
+        ]);
+
+        $this->createWithSnuffRepo('extensionRepository', new Extension([
+            Extension::FIELD__CLASS => ExtensionLogger::class,
+            Extension::FIELD__SUBJECT => '*',
+            Extension::FIELD__METHODS => ['notice']
+        ]));
     }
 
     public function tearDown(): void
     {
-        $this->unregisterSnuffRepos();
+        $this->deleteSnuffDynamicRepositories();
     }
 
     public function testMissedAnchor()

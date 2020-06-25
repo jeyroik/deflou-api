@@ -57,7 +57,9 @@ class PluginTriggerLaunchedTest extends TestCase
      */
     public function testMissedCurrentInstanceApplicationName()
     {
-        $plugin = new PluginTriggerLaunched();
+        $plugin = new PluginTriggerLaunched([
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger()
+        ]);
         $this->expectExceptionMessage('Missed current instance application ()');
         $plugin(new TriggerResponse());
     }
@@ -71,7 +73,9 @@ class PluginTriggerLaunchedTest extends TestCase
         $this->createWithSnuffRepo('deflouApplicationRepository', new Application([
             Application::FIELD__NAME => 'deflou'
         ]));
-        $plugin = new PluginTriggerLaunched();
+        $plugin = new PluginTriggerLaunched([
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger()
+        ]);
         $this->expectExceptionMessage('Missed event trigger.launched for the current instance');
         putenv('DF__APP_NAME=deflou');
         $plugin(new TriggerResponse());
@@ -96,7 +100,9 @@ class PluginTriggerLaunchedTest extends TestCase
             Player::FIELD__NAME => 'test_player'
         ]));
 
-        $plugin = new PluginTriggerLaunched();
+        $plugin = new PluginTriggerLaunched([
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger()
+        ]);
         $this->expectExceptionMessage('Missed anchor for a trigger.launched event');
         putenv('DF__APP_NAME=deflou');
         $plugin(new TriggerResponse());
@@ -134,7 +140,9 @@ class PluginTriggerLaunchedTest extends TestCase
             Anchor::FIELD__TRIGGER_NAME => 'test'
         ]));
 
-        $plugin = new class extends PluginTriggerLaunched {
+        $plugin = new class ([
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger()
+        ]) extends PluginTriggerLaunched {
             protected function getSendingData($response, $currentEventAnchor)
             {
                 throw new \Exception('Error');
