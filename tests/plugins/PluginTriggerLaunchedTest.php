@@ -59,9 +59,10 @@ class PluginTriggerLaunchedTest extends TestCase
     public function testMissedCurrentInstanceApplicationName()
     {
         $plugin = new PluginTriggerLaunched([
-            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger()
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger(),
+            PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
         ]);
-        $this->expectExceptionMessage('Missed current instance application ()');
+        $this->expectExceptionMessage('Missed or unknown current instance application ""');
         $plugin(new TriggerResponse());
     }
 
@@ -75,7 +76,8 @@ class PluginTriggerLaunchedTest extends TestCase
             Application::FIELD__NAME => 'deflou'
         ]));
         $plugin = new PluginTriggerLaunched([
-            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger()
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger(),
+            PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
         ]);
         $this->expectExceptionMessage('Missed or unknown event "trigger.launched" for the current instance');
         putenv('DF__APP_NAME=deflou');
@@ -102,7 +104,8 @@ class PluginTriggerLaunchedTest extends TestCase
         ]));
 
         $plugin = new PluginTriggerLaunched([
-            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger()
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger(),
+            PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
         ]);
         $this->expectExceptionMessage('Missed anchor for a trigger.launched event');
         putenv('DF__APP_NAME=deflou');
@@ -142,7 +145,8 @@ class PluginTriggerLaunchedTest extends TestCase
         ]));
 
         $plugin = new class ([
-            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger()
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger(),
+            PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
         ]) extends PluginTriggerLaunched {
             protected function getSendingData($response, $currentEventAnchor)
             {
