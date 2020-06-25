@@ -39,6 +39,7 @@ use extas\components\extensions\ExtensionHasCondition;
 use extas\components\extensions\ExtensionLogger;
 use extas\components\extensions\ExtensionRepository;
 use extas\components\extensions\TSnuffExtensions;
+use extas\components\fields\FieldRepository;
 use extas\components\http\TSnuffHttp;
 use extas\components\loggers\Logger;
 use extas\components\players\PlayerRepository;
@@ -84,6 +85,7 @@ class CreateTriggerEventTest extends TestCase
         $this->registerSnuffRepos([
             'conditionRepository' => ConditionRepository::class,
             'anchorRepository' => AnchorRepository::class,
+            'deflouAnchorRepository' => AnchorRepository::class,
             'deflouApplicationRepository' => ApplicationRepository::class,
             'deflouApplicationSampleRepository' => ApplicationSampleRepository::class,
             'deflouActivityRepository' => ActivityRepository::class,
@@ -91,7 +93,8 @@ class CreateTriggerEventTest extends TestCase
             'deflouTriggerRepository' => TriggerRepository::class,
             'playerRepository' => PlayerRepository::class,
             'deflouTriggerResponseRepository' => TriggerResponseRepository::class,
-            'pluginRepository' => PluginRepository::class
+            'pluginRepository' => PluginRepository::class,
+            'fieldRepository' => FieldRepository::class
         ]);
 
         $this->createWithSnuffRepo('extensionRepository', new Extension([
