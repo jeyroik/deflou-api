@@ -17,6 +17,7 @@ use extas\components\plugins\Plugin;
  * Class PluginTriggerTriggers
  *
  * @method IRepository deflouTriggerRepository()
+ * @method notice($message, array $context)
  *
  * @package deflou\components\plugins\triggers
  * @author jeyroik <jeyroik@gmail.com>
@@ -39,13 +40,19 @@ class PluginTriggerTriggers extends Plugin implements IStageTriggerTriggers
         $event = $this->getActivity();
 
         if (!$event->hasParameter(static::FIELD__ANCHOR)) {
-            throw new MissedOrUnknown('anchor in the current trigger event parameters');
+            $this->notice(
+                (new MissedOrUnknown('anchor in the current trigger event parameters'))->getMessage(),
+                $event->getParametersValues()
+            );
         }
 
         $anchor = $event->getParameterValue(static::FIELD__ANCHOR, null);
 
         if (!$anchor) {
-            throw new MissedOrUnknown('anchor');
+            $this->notice(
+                (new MissedOrUnknown('anchor'))->getMessage(),
+                $event->getParametersValues()
+            );
         }
 
         $type2triggers = [

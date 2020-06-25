@@ -193,7 +193,7 @@ class CreateTriggerEventTest extends TestCase
 
         $this->assertArrayHasKey('notice', BufferLogger::$log);
         $this->assertEquals(
-            'Can not apply trigger "test" to an event',
+            'Missed or unknown action for trigger "test"',
             array_shift(BufferLogger::$log['notice'])
         );
     }
@@ -238,7 +238,7 @@ class CreateTriggerEventTest extends TestCase
 
         $this->assertArrayHasKey('notice', BufferLogger::$log);
         $this->assertEquals(
-            'Can not apply trigger "test" to an event',
+            'Missed or unknown action for trigger "test"',
             array_shift(BufferLogger::$log['notice'])
         );
     }
@@ -282,7 +282,7 @@ class CreateTriggerEventTest extends TestCase
 
         $this->assertArrayHasKey('notice', BufferLogger::$log);
         $this->assertEquals(
-            'Can not apply trigger "test" to an event',
+            'Missed or unknown action for trigger "test"',
             array_shift(BufferLogger::$log['notice'])
         );
     }
@@ -343,7 +343,7 @@ class CreateTriggerEventTest extends TestCase
 
         $this->assertArrayHasKey('notice', BufferLogger::$log);
         $this->assertEquals(
-            'Can not apply trigger "test" to an event',
+            'Missed or unknown action for trigger "test"',
             array_shift(BufferLogger::$log['notice'])
         );
     }
