@@ -189,12 +189,9 @@ class CreateTriggerEventTest extends TestCase
             ]
         ]));
 
-        $operation();
-
-        $this->assertArrayHasKey('notice', BufferLogger::$log);
-        $this->assertEquals(
-            'Missed or unknown action for trigger "test"',
-            array_shift(BufferLogger::$log['notice'])
+        $this->responseHasError(
+            $operation,
+            $this->getError(400, 'Missed or unknown action for trigger "test"')
         );
     }
 
@@ -234,12 +231,9 @@ class CreateTriggerEventTest extends TestCase
             ]
         ]));
 
-        $operation();
-
-        $this->assertArrayHasKey('notice', BufferLogger::$log);
-        $this->assertEquals(
-            'Missed or unknown action for trigger "test"',
-            array_shift(BufferLogger::$log['notice'])
+        $this->responseHasError(
+            $operation,
+            $this->getError(400, 'Missed or unknown action for trigger "test"')
         );
     }
 
@@ -278,12 +272,9 @@ class CreateTriggerEventTest extends TestCase
             ]
         ]));
 
-        $operation();
-
-        $this->assertArrayHasKey('notice', BufferLogger::$log);
-        $this->assertEquals(
-            'Missed or unknown action for trigger "test"',
-            array_shift(BufferLogger::$log['notice'])
+        $this->responseHasError(
+            $operation,
+            $this->getError(400, 'Missed or unknown action for trigger "test"')
         );
     }
 
@@ -339,12 +330,9 @@ class CreateTriggerEventTest extends TestCase
             Extension::FIELD__SUBJECT => 'extas.sample.parameter'
         ]));
 
-        $operation();
-
-        $this->assertArrayHasKey('notice', BufferLogger::$log);
-        $this->assertEquals(
-            'Missed or unknown action for trigger "test"',
-            array_shift(BufferLogger::$log['notice'])
+        $this->responseHasError(
+            $operation,
+            $this->getError(400, 'Missed or unknown action for trigger "test"')
         );
     }
 
