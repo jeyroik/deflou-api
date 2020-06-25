@@ -93,13 +93,13 @@ class CreateTriggerEventTest extends TestCase
     public function testMissedAnchor()
     {
         $operation = $this->getOperation('.missed.anchor');
-        $this->responseHasError($operation, $this->getError(400, 'Missed or unknown anchor ""'));
+        $this->responseHasError($operation, $this->getError(400, 'Missed or unknown event'));
     }
 
     public function testUnknownAnchor()
     {
         $operation = $this->getOperation('.unknown.anchor');
-        $this->responseHasError($operation, $this->getError(400, 'Missed or unknown anchor "unknown"'));
+        $this->responseHasError($operation, $this->getError(400, 'Missed or unknown event'));
     }
 
     /**
@@ -114,7 +114,7 @@ class CreateTriggerEventTest extends TestCase
             Anchor::FIELD__EVENT_NAME => 'unknown'
         ]));
 
-        $this->responseHasError($operation, $this->getError(400, 'Missed or unknown event "unknown"'));
+        $this->responseHasError($operation, $this->getError(400, 'Missed or unknown event'));
     }
 
     /**
@@ -135,10 +135,7 @@ class CreateTriggerEventTest extends TestCase
             Activity::FIELD__CLASS => EventTriggerLaunched::class
         ]));
 
-        $this->responseHasError($operation, $this->getError(
-            400,
-            'Missed "' . EventTriggerLaunched::FIELD__ANCHOR . '" parameter'
-        ));
+        $this->responseHasError($operation, $this->getError(400, 'Missed or unknown event'));
     }
 
     /**

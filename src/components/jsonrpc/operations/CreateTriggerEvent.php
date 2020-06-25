@@ -13,6 +13,7 @@ use deflou\interfaces\stages\IStageTriggerTriggers;
 use deflou\interfaces\triggers\ITrigger;
 use deflou\components\applications\activities\Activity;
 
+use extas\components\exceptions\MissedOrUnknown;
 use extas\interfaces\jsonrpc\operations\IOperationCreate;
 use extas\interfaces\repositories\IRepository;
 use extas\components\jsonrpc\operations\OperationDispatcher;
@@ -53,6 +54,7 @@ class CreateTriggerEvent extends OperationDispatcher implements IOperationCreate
 
     /**
      * @return IActivity
+     * @throws MissedOrUnknown
      */
     protected function getCurrentEvent(): IActivity
     {
@@ -64,6 +66,10 @@ class CreateTriggerEvent extends OperationDispatcher implements IOperationCreate
              * @var IStageTriggerEvent $plugin
              */
             $plugin($event);
+        }
+
+        if (!$event->getName()) {
+            throw new MissedOrUnknown('event');
         }
 
         return $event;

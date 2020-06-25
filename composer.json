@@ -6,6 +6,7 @@
     "jeyroik/extas-jsonrpc": "4.*",
     "jeyroik/extas-parsers": "0.*",
     "jeyroik/deflou-core": "0.*",
+    "jeyroik/extas-loggers": "0.*",
     "ramsey/uuid": "4.*",
     "guzzlehttp/guzzle": "6.*"
   },

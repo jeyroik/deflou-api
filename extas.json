@@ -6,6 +6,16 @@
       "stage": "extas.jsonrpc.init"
     }
   ],
+  "extensions": [
+    {
+      "class": "extas\\components\\extensions\\ExtensionLogger",
+      "interface": "extas\\interfaces\\extensions\\IExtensionLogger",
+      "subject": "*",
+      "methods": [
+        "emergency", "alert", "critical", "warning", "error", "notice", "info", "debug", "log"
+      ]
+    }
+  ],
   "application_samples": [
     {
       "name": "deflou",

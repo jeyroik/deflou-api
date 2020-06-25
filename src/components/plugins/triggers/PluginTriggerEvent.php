@@ -11,11 +11,13 @@ use extas\components\http\THasHttpIO;
 use extas\components\jsonrpc\THasJsonRpcRequest;
 use extas\components\jsonrpc\THasJsonRpcResponse;
 use extas\components\plugins\Plugin;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class PluginTriggerEvent
  *
  * @method IRepository anchorRepository()
+ * @method notice($message, array $context)
  *
  * @package deflou\components\plugins\triggers
  * @author jeyroik <jeyroik@gmail.com>
@@ -42,7 +44,7 @@ class PluginTriggerEvent extends Plugin implements IStageTriggerEvent
         $anchor = $this->anchorRepository()->one([IAnchor::FIELD__ID => $anchorId]);
 
         if (!$anchor) {
-            throw new MissedOrUnknown('anchor "' . $anchorId . '"', 400);
+            $this->notice((new MissedOrUnknown('anchor "' . $anchorId . '"'))->getMessage(), $data);
         }
 
         $this->updateAnchor($anchor);
