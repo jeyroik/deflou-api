@@ -15,7 +15,7 @@
     "vlucas/phpdotenv": "^3.4",
     "phpstan/phpstan": "0.*",
     "jeyroik/extas-snuffbox": "0.*",
-    "jeyroik/extas-snuffbox-repositories": "0.*"
+    "jeyroik/extas-snuffbox-repositories": "0.*",
     "jeyroik/extas-snuffbox-loggers": "0.*"
   },
   "autoload": {
