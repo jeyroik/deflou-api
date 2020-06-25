@@ -45,13 +45,13 @@ class PluginTriggerEvent extends Plugin implements IStageTriggerEvent
 
         if (!$anchor) {
             $this->notice((new MissedOrUnknown('anchor "' . $anchorId . '"'))->getMessage(), $data);
+        } else {
+            $this->updateAnchor($anchor);
+
+            $anchorEvent = $anchor->getEvent();
+            $event = $anchorEvent ?: $event;
+            $event->addParameterByValue(static::REQUEST__ANCHOR, $anchor);
         }
-
-        $this->updateAnchor($anchor);
-
-        $anchorEvent = $anchor->getEvent();
-        $event = $anchorEvent ?: $event;
-        $event->addParameterByValue(static::REQUEST__ANCHOR, $anchor);
     }
 
     /**

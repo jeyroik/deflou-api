@@ -43,6 +43,7 @@ use extas\components\http\TSnuffHttp;
 use extas\components\loggers\Logger;
 use extas\components\players\PlayerRepository;
 use extas\components\plugins\Plugin;
+use extas\components\plugins\PluginRepository;
 use extas\components\plugins\TSnuffPlugins;
 use extas\components\repositories\TSnuffRepository;
 use extas\components\repositories\TSnuffRepositoryDynamic;
@@ -85,7 +86,8 @@ class CreateTriggerEventTest extends TestCase
             'deflouActivitySampleRepository' => ActivitySampleRepository::class,
             'deflouTriggerRepository' => TriggerRepository::class,
             'playerRepository' => PlayerRepository::class,
-            'deflouTriggerResponseRepository' => TriggerResponseRepository::class
+            'deflouTriggerResponseRepository' => TriggerResponseRepository::class,
+            'pluginRepository' => PluginRepository::class
         ]);
 
         $this->createSnuffDynamicRepositories([

@@ -69,7 +69,7 @@ class CreateTriggerEvent extends OperationDispatcher implements IOperationCreate
         }
 
         if (!$event->getName()) {
-            throw new MissedOrUnknown('event');
+            throw new MissedOrUnknown('event', 400);
         }
 
         return $event;
