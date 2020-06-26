@@ -132,7 +132,7 @@ class PluginTriggerLaunchedTest extends TestCase
         $this->assertArrayHasKey('warning', BufferLogger::$log);
         $this->assertTrue(
             in_array(
-                'Missed anchor for a trigger.launched event',
+                'Missed or unknown anchor for a "trigger.launched" event',
                 BufferLogger::$log['warning']
             ),
             print_r(BufferLogger::$log, true)
@@ -173,7 +173,10 @@ class PluginTriggerLaunchedTest extends TestCase
         ]));
 
         $plugin = new class ([
-            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger(),
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger([
+                Trigger::FIELD__NAME => 'test',
+                Trigger::FIELD__PLAYER_NAME => 'test_player'
+            ]),
             PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
         ]) extends PluginTriggerLaunched {
             protected function getSendingData($response, $currentEventAnchor)
