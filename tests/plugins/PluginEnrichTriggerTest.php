@@ -54,7 +54,7 @@ class PluginEnrichTriggerTest extends TestCase
             Trigger::FIELD__ACTION_PARAMETERS => [
                 'test_event' => [
                     ISampleParameter::FIELD__NAME => 'test_event',
-                    ISampleParameter::FIELD__VALUE => '@event.test'
+                    ISampleParameter::FIELD__VALUE => '@event.parameters.test.value'
                 ],
                 'test_trigger' => [
                     ISampleParameter::FIELD__NAME => 'test_trigger',
