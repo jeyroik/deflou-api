@@ -530,7 +530,7 @@ class CreateTriggerEventTest extends TestCase
         ]));
 
         putenv('DF__APP_NAME=test_app');
-
+        
         $this->responseHasError($operation, $this->getError(
             400,
             PluginLaunchedWithException::EXCEPTION__MESSAGE

@@ -12,10 +12,11 @@ use deflou\components\plugins\triggers\PluginTriggerLaunched;
 use deflou\components\triggers\Trigger;
 use deflou\components\triggers\TriggerResponse;
 use deflou\interfaces\triggers\ITriggerResponse;
+use extas\components\loggers\BufferLogger;
+use extas\components\loggers\TSnuffLogging;
 use extas\components\players\Player;
 use extas\components\players\PlayerRepository;
 use extas\components\protocols\ProtocolRepository;
-use extas\components\repositories\TSnuffRepository;
 use extas\interfaces\samples\parameters\ISampleParameter;
 use GuzzleHttp\Client;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -29,7 +30,7 @@ use PHPUnit\Framework\TestCase;
  */
 class PluginTriggerLaunchedTest extends TestCase
 {
-    use TSnuffRepository;
+    use TSnuffLogging;
 
     protected function setUp(): void
     {
@@ -38,6 +39,7 @@ class PluginTriggerLaunchedTest extends TestCase
         $env->load();
         defined('APP__ROOT') || define('APP__ROOT', getcwd());
 
+        $this->turnSnuffLoggingOn();
         $this->registerSnuffRepos([
             'deflouApplicationRepository' => ApplicationRepository::class,
             'anchorRepository' => AnchorRepository::class,
@@ -52,6 +54,7 @@ class PluginTriggerLaunchedTest extends TestCase
     public function tearDown(): void
     {
         $this->unregisterSnuffRepos();
+        $this->turnSnuffLoggingOff();
     }
 
     /**
@@ -64,8 +67,11 @@ class PluginTriggerLaunchedTest extends TestCase
             PluginTriggerLaunched::FIELD__TRIGGER => new Trigger(),
             PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
         ]);
-        $this->expectExceptionMessage('Missed or unknown current instance application ""');
         $plugin(new TriggerResponse());
+        $this->assertArrayHasKey('warning', BufferLogger::$log);
+        $this->assertTrue(
+            in_array('Missed or unknown current instance application ""', BufferLogger::$log['warning'])
+        );
     }
 
     /**
@@ -81,9 +87,15 @@ class PluginTriggerLaunchedTest extends TestCase
             PluginTriggerLaunched::FIELD__TRIGGER => new Trigger(),
             PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
         ]);
-        $this->expectExceptionMessage('Missed or unknown event "trigger.launched" for the current instance');
         putenv('DF__APP_NAME=deflou');
         $plugin(new TriggerResponse());
+        $this->assertArrayHasKey('warning', BufferLogger::$log);
+        $this->assertTrue(
+            in_array(
+                'Missed or unknown event "trigger.launched" for the current instance',
+                BufferLogger::$log['warning']
+            )
+        );
     }
 
     /**
@@ -109,9 +121,15 @@ class PluginTriggerLaunchedTest extends TestCase
             PluginTriggerLaunched::FIELD__TRIGGER => new Trigger(),
             PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
         ]);
-        $this->expectExceptionMessage('Missed anchor for a trigger.launched event');
         putenv('DF__APP_NAME=deflou');
         $plugin(new TriggerResponse());
+        $this->assertArrayHasKey('warning', BufferLogger::$log);
+        $this->assertTrue(
+            in_array(
+                'Missed anchor for a trigger.launched event',
+                BufferLogger::$log['warning']
+            )
+        );
     }
 
     /**
