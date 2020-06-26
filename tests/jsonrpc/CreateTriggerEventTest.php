@@ -244,26 +244,7 @@ class CreateTriggerEventTest extends TestCase
      */
     public function testAnchorTriggerType()
     {
-        $operation = $this->getOperation('.not.applicable.trigger');
-
-        $this->createWithSnuffRepo('anchorRepository', new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event',
-            Anchor::FIELD__TRIGGER_NAME => 'test',
-            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
-        ]));
-
-        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__CLASS => EventNothing::class,
-            Activity::FIELD__APPLICATION_NAME => 'test_app'
-        ]));
-
-        $this->createWithSnuffRepo('deflouApplicationRepository', new Application([
-            Application::FIELD__NAME => 'test_app',
-            Application::FIELD__SAMPLE_NAME => 'test'
-        ]));
+        $operation = $this->getOperationForTestApp('.not.applicable.trigger');
 
         $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
             Trigger::FIELD__NAME => 'test',
@@ -285,26 +266,7 @@ class CreateTriggerEventTest extends TestCase
      */
     public function testEventConditionFailed()
     {
-        $operation = $this->getOperation('.not.applicable.trigger');
-
-        $this->createWithSnuffRepo('anchorRepository', new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event',
-            Anchor::FIELD__TRIGGER_NAME => 'test',
-            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
-        ]));
-
-        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__CLASS => EventNothing::class,
-            Activity::FIELD__APPLICATION_NAME => 'test_app'
-        ]));
-
-        $this->createWithSnuffRepo('deflouApplicationRepository', new Application([
-            Application::FIELD__NAME => 'test_app',
-            Application::FIELD__SAMPLE_NAME => 'test'
-        ]));
+        $operation = $this->getOperationForTestApp('.not.applicable.trigger');
 
         $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
             Trigger::FIELD__NAME => 'test',
@@ -343,26 +305,7 @@ class CreateTriggerEventTest extends TestCase
      */
     public function testMissedAction()
     {
-        $operation = $this->getOperation('.not.applicable.trigger');
-
-        $this->createWithSnuffRepo('anchorRepository', new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event',
-            Anchor::FIELD__TRIGGER_NAME => 'test',
-            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
-        ]));
-
-        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__CLASS => EventNothing::class,
-            Activity::FIELD__APPLICATION_NAME => 'test_app'
-        ]));
-
-        $this->createWithSnuffRepo('deflouApplicationRepository', new Application([
-            Application::FIELD__NAME => 'test_app',
-            Application::FIELD__SAMPLE_NAME => 'test'
-        ]));
+        $operation = $this->getOperationForTestApp('.not.applicable.trigger');
 
         $this->createWithSnuffRepo('deflouTriggerRepository', new Trigger([
             Trigger::FIELD__NAME => 'test',
@@ -381,26 +324,7 @@ class CreateTriggerEventTest extends TestCase
      */
     public function testEnrichTrigger()
     {
-        $operation = $this->getOperation('.not.applicable.trigger');
-
-        $this->createWithSnuffRepo('anchorRepository', new Anchor([
-            Anchor::FIELD__ID => 'test',
-            Anchor::FIELD__EVENT_NAME => 'test_event',
-            Anchor::FIELD__TRIGGER_NAME => 'test',
-            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
-        ]));
-
-        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
-            Activity::FIELD__NAME => 'test_event',
-            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
-            Activity::FIELD__CLASS => EventNothing::class,
-            Activity::FIELD__APPLICATION_NAME => 'test_app'
-        ]));
-
-        $this->createWithSnuffRepo('deflouApplicationRepository', new Application([
-            Application::FIELD__NAME => 'test_app',
-            Application::FIELD__SAMPLE_NAME => 'test'
-        ]));
+        $operation = $this->getOperationForTestApp('.not.applicable.trigger');
 
         $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
             Activity::FIELD__NAME => 'test_action',
@@ -530,7 +454,7 @@ class CreateTriggerEventTest extends TestCase
         ]));
 
         putenv('DF__APP_NAME=test_app');
-        
+
         $this->responseHasError($operation, $this->getError(
             400,
             PluginLaunchedWithException::EXCEPTION__MESSAGE
@@ -667,5 +591,36 @@ class CreateTriggerEventTest extends TestCase
         $response = $this->getResponseMockData();
         $response[IResponse::RESPONSE__ERROR] = $error;
         $this->assertEquals($response, $jsonRpcResponse);
+    }
+
+    /**
+     * @param string $requestPrefix
+     * @return IOperationDispatcher
+     * @throws \Exception
+     */
+    protected function getOperationForTestApp(string $requestPrefix)
+    {
+        $operation = $this->getOperation($requestPrefix);
+
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
+            Anchor::FIELD__ID => 'test',
+            Anchor::FIELD__EVENT_NAME => 'test_event',
+            Anchor::FIELD__TRIGGER_NAME => 'test',
+            Anchor::FIELD__TYPE => Anchor::TYPE__TRIGGER
+        ]));
+
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
+            Activity::FIELD__NAME => 'test_event',
+            Activity::FIELD__TYPE => Activity::TYPE__EVENT,
+            Activity::FIELD__CLASS => EventNothing::class,
+            Activity::FIELD__APPLICATION_NAME => 'test_app'
+        ]));
+
+        $this->createWithSnuffRepo('deflouApplicationRepository', new Application([
+            Application::FIELD__NAME => 'test_app',
+            Application::FIELD__SAMPLE_NAME => 'test'
+        ]));
+
+        return $operation;
     }
 }

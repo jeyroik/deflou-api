@@ -12,6 +12,7 @@ use deflou\components\plugins\triggers\PluginTriggerLaunched;
 use deflou\components\triggers\Trigger;
 use deflou\components\triggers\TriggerResponse;
 use deflou\interfaces\triggers\ITriggerResponse;
+use extas\components\exceptions\MissedOrUnknown;
 use extas\components\loggers\BufferLogger;
 use extas\components\loggers\TSnuffLogging;
 use extas\components\players\Player;
@@ -67,6 +68,7 @@ class PluginTriggerLaunchedTest extends TestCase
             PluginTriggerLaunched::FIELD__TRIGGER => new Trigger(),
             PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
         ]);
+        putenv('DF__APP_NAME=');
         $plugin(new TriggerResponse());
         $this->assertArrayHasKey('warning', BufferLogger::$log);
         $this->assertTrue(
@@ -78,6 +80,7 @@ class PluginTriggerLaunchedTest extends TestCase
     /**
      * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \extas\components\exceptions\MissedOrUnknown
+     * @throws \Exception
      */
     public function testMissedEventForCurrentInstance()
     {
@@ -102,7 +105,8 @@ class PluginTriggerLaunchedTest extends TestCase
 
     /**
      * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \extas\components\exceptions\MissedOrUnknown
+     * @throws MissedOrUnknown
+     * @throws \Exception
      */
     public function testMissedEventAnchorForCurrentInstance()
     {
@@ -138,6 +142,7 @@ class PluginTriggerLaunchedTest extends TestCase
     /**
      * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \extas\components\exceptions\MissedOrUnknown
+     * @throws \Exception
      */
     public function testFailSendEvent()
     {
@@ -189,6 +194,7 @@ class PluginTriggerLaunchedTest extends TestCase
     /**
      * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \extas\components\exceptions\MissedOrUnknown
+     * @throws \Exception
      */
     public function testSuccessSending()
     {
@@ -269,6 +275,7 @@ class PluginTriggerLaunchedTest extends TestCase
     /**
      * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \extas\components\exceptions\MissedOrUnknown
+     * @throws \Exception
      */
     public function testSuccessGetSendingData()
     {
