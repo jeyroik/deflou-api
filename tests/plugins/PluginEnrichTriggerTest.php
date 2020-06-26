@@ -4,9 +4,8 @@ namespace tests\plugins;
 use deflou\components\applications\activities\Activity;
 use deflou\components\plugins\triggers\PluginTriggerEnrich;
 use deflou\components\triggers\Trigger;
-use extas\components\conditions\Condition;
-use extas\components\conditions\ConditionNotEmpty;
 use extas\components\conditions\ConditionRepository;
+use extas\components\conditions\TSnuffConditions;
 use extas\components\http\TSnuffHttp;
 use extas\components\parsers\Parser;
 use extas\components\parsers\ParserSimpleReplace;
@@ -26,6 +25,7 @@ class PluginEnrichTriggerTest extends TestCase
     use TSnuffRepositoryDynamic;
     use THasMagicClass;
     use TSnuffHttp;
+    use TSnuffConditions;
 
     protected function setUp(): void
     {
@@ -44,7 +44,7 @@ class PluginEnrichTriggerTest extends TestCase
 
     public function tearDown(): void
     {
-        $this->unregisterSnuffRepos();
+        $this->deleteSnuffDynamicRepositories();
     }
 
     public function testEnrich()
@@ -72,12 +72,7 @@ class PluginEnrichTriggerTest extends TestCase
             ]
         ]);
 
-        $this->createWithSnuffRepo('conditionRepository', new Condition([
-            Condition::FIELD__NAME => 'not_empty',
-            Condition::FIELD__CLASS => ConditionNotEmpty::class,
-            Condition::FIELD__ALIASES => ['not_empty', '!@', '!null', '!empty']
-        ]));
-
+        $this->createSnuffCondition('not_empty');
         $this->getMagicClass('parserRepository')->create(new Parser([
             Parser::FIELD__NAME => 'replace_with_event_parameters',
             Parser::FIELD__CLASS => ParserSimpleReplace::class,

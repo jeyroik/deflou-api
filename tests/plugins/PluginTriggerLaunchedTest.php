@@ -124,7 +124,7 @@ class PluginTriggerLaunchedTest extends TestCase
         ]));
 
         $plugin = new PluginTriggerLaunched([
-            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger(),
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger([Trigger::FIELD__PLAYER_NAME => 'test_player']),
             PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
         ]);
         putenv('DF__APP_NAME=deflou');
