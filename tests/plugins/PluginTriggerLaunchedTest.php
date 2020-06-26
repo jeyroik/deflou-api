@@ -189,9 +189,17 @@ class PluginTriggerLaunchedTest extends TestCase
                 throw new \Exception('Fail');
             }
         };
-        $this->expectExceptionMessage('Fail');
+
         putenv('DF__APP_NAME=deflou');
         $plugin(new TriggerResponse());
+        $this->assertArrayHasKey('warning', BufferLogger::$log);
+        $this->assertTrue(
+            in_array(
+                'Fail',
+                BufferLogger::$log['warning']
+            ),
+            print_r(BufferLogger::$log, true)
+        );
     }
 
     /**
