@@ -3,7 +3,7 @@ namespace tests\plugins;
 
 use deflou\components\applications\activities\Activity;
 use deflou\components\applications\activities\ActivityRepository;
-use deflou\components\applications\activities\events\EventTriggerLaunched;
+use deflou\components\applications\events\EventTriggerLaunched;
 use deflou\components\applications\anchors\Anchor;
 use deflou\components\applications\anchors\AnchorRepository;
 use deflou\components\applications\Application;
@@ -11,27 +11,17 @@ use deflou\components\applications\ApplicationRepository;
 use deflou\components\plugins\triggers\PluginTriggerLaunched;
 use deflou\components\triggers\Trigger;
 use deflou\components\triggers\TriggerResponse;
-use deflou\interfaces\applications\activities\IActivity;
-use deflou\interfaces\applications\activities\IActivityRepository;
-use deflou\interfaces\applications\anchors\IAnchor;
-use deflou\interfaces\applications\anchors\IAnchorRepository;
-use deflou\interfaces\applications\IApplicationRepository;
-use deflou\interfaces\triggers\ITrigger;
 use deflou\interfaces\triggers\ITriggerResponse;
+use extas\components\exceptions\MissedOrUnknown;
+use extas\components\loggers\BufferLogger;
+use extas\components\loggers\TSnuffLogging;
 use extas\components\players\Player;
 use extas\components\players\PlayerRepository;
 use extas\components\protocols\ProtocolRepository;
-use extas\components\SystemContainer;
-use extas\interfaces\players\IPlayerRepository;
-use extas\interfaces\protocols\IProtocolRepository;
-use extas\interfaces\repositories\IRepository;
 use extas\interfaces\samples\parameters\ISampleParameter;
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Client;
 use GuzzleHttp\Promise\PromiseInterface;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
 /**
  * Class PluginTriggerLaunchedTest
@@ -41,10 +31,7 @@ use Psr\Http\Message\ResponseInterface;
  */
 class PluginTriggerLaunchedTest extends TestCase
 {
-    protected ?IRepository $activityRepo = null;
-    protected ?IRepository $appRepo = null;
-    protected ?IRepository $playerRepo = null;
-    protected ?IRepository $anchorRepo = null;
+    use TSnuffLogging;
 
     protected function setUp(): void
     {
@@ -53,107 +40,113 @@ class PluginTriggerLaunchedTest extends TestCase
         $env->load();
         defined('APP__ROOT') || define('APP__ROOT', getcwd());
 
-        $this->appRepo = new ApplicationRepository();
-        $this->anchorRepo = new AnchorRepository();
-        $this->activityRepo = new ActivityRepository();
-        $this->playerRepo = new PlayerRepository();
-
-        SystemContainer::addItem(
-            IApplicationRepository::class,
-            ApplicationRepository::class
-        );
-
-        SystemContainer::addItem(
-            IAnchorRepository::class,
-            AnchorRepository::class
-        );
-
-        SystemContainer::addItem(
-            IActivityRepository::class,
-            ActivityRepository::class
-        );
-
-        SystemContainer::addItem(
-            IPlayerRepository::class,
-            PlayerRepository::class
-        );
-
-        SystemContainer::addItem(
-            IProtocolRepository::class,
-            ProtocolRepository::class
-        );
+        $this->turnSnuffLoggingOn();
+        $this->registerSnuffRepos([
+            'deflouApplicationRepository' => ApplicationRepository::class,
+            'anchorRepository' => AnchorRepository::class,
+            'deflouAnchorRepository' => AnchorRepository::class,
+            'deflouActivityRepository' => ActivityRepository::class,
+            'playerRepository' => PlayerRepository::class,
+            'protocolRepository' => ProtocolRepository::class,
+            'httpClient' => Client::class
+        ]);
     }
 
     public function tearDown(): void
     {
-        $this->anchorRepo->delete([Anchor::FIELD__ID => 'test_anchor']);
-        $this->appRepo->delete([Application::FIELD__NAME => 'deflou']);
-        $this->activityRepo->delete([Activity::FIELD__NAME => 'trigger.launched_']);
-        $this->playerRepo->delete([Player::FIELD__NAME => 'test_player']);
+        $this->unregisterSnuffRepos();
+        $this->turnSnuffLoggingOff();
     }
 
+    /**
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \extas\components\exceptions\MissedOrUnknown
+     */
     public function testMissedCurrentInstanceApplicationName()
     {
-        $plugin = new PluginTriggerLaunched();
-        $this->expectExceptionMessage('Missed current instance application ()');
-        $plugin(
-            new Activity(),
-            new Activity(),
-            new Trigger(),
-            new Anchor(),
-            new TriggerResponse()
+        $plugin = new PluginTriggerLaunched([
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger(),
+            PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
+        ]);
+        putenv('DF__APP_NAME=');
+        $plugin(new TriggerResponse());
+        $this->assertArrayHasKey('warning', BufferLogger::$log);
+        $this->assertTrue(
+            in_array('Missed or unknown current instance application ""', BufferLogger::$log['warning']),
+            print_r(BufferLogger::$log, true)
         );
     }
 
+    /**
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \extas\components\exceptions\MissedOrUnknown
+     * @throws \Exception
+     */
     public function testMissedEventForCurrentInstance()
     {
-        $this->appRepo->create(new Application([
+        $this->createWithSnuffRepo('deflouApplicationRepository', new Application([
             Application::FIELD__NAME => 'deflou'
         ]));
-        $plugin = new PluginTriggerLaunched();
-        $this->expectExceptionMessage('Missed event trigger.launched for the current instance');
+        $plugin = new PluginTriggerLaunched([
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger(),
+            PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
+        ]);
         putenv('DF__APP_NAME=deflou');
-        $plugin(
-            new Activity(),
-            new Activity(),
-            new Trigger(),
-            new Anchor(),
-            new TriggerResponse()
+        $plugin(new TriggerResponse());
+        $this->assertArrayHasKey('warning', BufferLogger::$log);
+        $this->assertTrue(
+            in_array(
+                'Missed or unknown event "trigger.launched" for the current instance',
+                BufferLogger::$log['warning']
+            ),
+            print_r(BufferLogger::$log, true)
         );
     }
 
+    /**
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws MissedOrUnknown
+     * @throws \Exception
+     */
     public function testMissedEventAnchorForCurrentInstance()
     {
-        $this->appRepo->create(new Application([
+        $this->createWithSnuffRepo('deflouApplicationRepository', new Application([
             Application::FIELD__NAME => 'deflou'
         ]));
-        $this->activityRepo->create(new Activity([
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
             Activity::FIELD__NAME => 'trigger.launched_',
             Activity::FIELD__SAMPLE_NAME => 'trigger.launched',
             Activity::FIELD__APPLICATION_NAME => 'deflou',
             Activity::FIELD__TYPE => Activity::TYPE__EVENT
         ]));
-        $this->playerRepo->create(new Player([
+        $this->createWithSnuffRepo('playerRepository', new Player([
             Player::FIELD__NAME => 'test_player'
         ]));
 
-        $plugin = new PluginTriggerLaunched();
-        $this->expectExceptionMessage('Missed anchor for a trigger.launched event');
+        $plugin = new PluginTriggerLaunched([
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger([Trigger::FIELD__PLAYER_NAME => 'test_player']),
+            PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
+        ]);
         putenv('DF__APP_NAME=deflou');
-        $plugin(
-            new Activity(),
-            new Activity(),
-            new Trigger([
-                Trigger::FIELD__PLAYER_NAME => 'test_player'
-            ]),
-            new Anchor(),
-            new TriggerResponse()
+        $plugin(new TriggerResponse());
+        $this->assertArrayHasKey('warning', BufferLogger::$log);
+        $this->assertTrue(
+            in_array(
+                'Missed or unknown anchor for a "trigger.launched" event',
+                BufferLogger::$log['warning']
+            ),
+            print_r(BufferLogger::$log, true)
         );
     }
 
+    /**
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \extas\components\exceptions\MissedOrUnknown
+     * @throws \Exception
+     */
     public function testFailSendEvent()
     {
-        $this->appRepo->create(new Application([
+        $this->createWithSnuffRepo('deflouApplicationRepository', new Application([
             Application::FIELD__NAME => 'deflou',
             Application::FIELD__SAMPLE_NAME => 'deflou',
             Application::FIELD__PARAMETERS => [
@@ -163,24 +156,30 @@ class PluginTriggerLaunchedTest extends TestCase
                 ]
             ]
         ]));
-        $this->activityRepo->create(new Activity([
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
             Activity::FIELD__NAME => 'trigger.launched_',
             Activity::FIELD__SAMPLE_NAME => 'trigger.launched',
             Activity::FIELD__APPLICATION_NAME => 'deflou',
             Activity::FIELD__TYPE => Activity::TYPE__EVENT
         ]));
-        $this->playerRepo->create(new Player([
+        $this->createWithSnuffRepo('playerRepository', new Player([
             Player::FIELD__NAME => 'test_player'
         ]));
-        $this->anchorRepo->create(new Anchor([
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
             Anchor::FIELD__ID => 'test_anchor',
             Anchor::FIELD__EVENT_NAME => 'trigger.launched_',
             Anchor::FIELD__PLAYER_NAME => 'test_player',
             Anchor::FIELD__TRIGGER_NAME => 'test'
         ]));
 
-        $plugin = new class extends PluginTriggerLaunched {
-            protected function getSendingData($trigger, $response, $anchor, $currentEventAnchor)
+        $plugin = new class ([
+            PluginTriggerLaunched::FIELD__TRIGGER => new Trigger([
+                Trigger::FIELD__NAME => 'test',
+                Trigger::FIELD__PLAYER_NAME => 'test_player'
+            ]),
+            PluginTriggerLaunched::FIELD__ACTIVITY => new Activity()
+        ]) extends PluginTriggerLaunched {
+            protected function getSendingData($response, $currentEventAnchor)
             {
                 throw new \Exception('Error');
             }
@@ -190,39 +189,43 @@ class PluginTriggerLaunchedTest extends TestCase
                 throw new \Exception('Fail');
             }
         };
-        $this->expectExceptionMessage('Fail');
+
         putenv('DF__APP_NAME=deflou');
-        $plugin(
-            new Activity(),
-            new Activity(),
-            new Trigger([
-                Trigger::FIELD__NAME => 'test',
-                Trigger::FIELD__PLAYER_NAME => 'test_player'
-            ]),
-            new Anchor(),
-            new TriggerResponse()
+        $plugin(new TriggerResponse());
+        $this->assertArrayHasKey('warning', BufferLogger::$log);
+        $this->assertTrue(
+            in_array(
+                'Fail',
+                BufferLogger::$log['warning']
+            ),
+            print_r(BufferLogger::$log, true)
         );
     }
 
+    /**
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \extas\components\exceptions\MissedOrUnknown
+     * @throws \Exception
+     */
     public function testSuccessSending()
     {
         putenv('DF__APP_NAME=deflou');
         putenv('DF__VERSION=3.0');
 
-        $this->appRepo->create(new Application([
+        $this->createWithSnuffRepo('deflouApplicationRepository', new Application([
             Application::FIELD__NAME => 'deflou',
             Application::FIELD__SAMPLE_NAME => 'deflou',
         ]));
-        $this->activityRepo->create(new Activity([
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
             Activity::FIELD__NAME => 'trigger.launched_',
             Activity::FIELD__SAMPLE_NAME => 'trigger.launched',
             Activity::FIELD__APPLICATION_NAME => 'deflou',
             Activity::FIELD__TYPE => Activity::TYPE__EVENT
         ]));
-        $this->playerRepo->create(new Player([
+        $this->createWithSnuffRepo('playerRepository', new Player([
             Player::FIELD__NAME => 'test_player'
         ]));
-        $currentEventAnchor = $this->anchorRepo->create(new Anchor([
+        $currentEventAnchor = $this->createWithSnuffRepo('anchorRepository', new Anchor([
             Anchor::FIELD__ID => 'test_anchor',
             Anchor::FIELD__EVENT_NAME => 'trigger.launched_',
             Anchor::FIELD__PLAYER_NAME => 'test_player',
@@ -239,14 +242,26 @@ class PluginTriggerLaunchedTest extends TestCase
             Anchor::FIELD__ID => 'test'
         ]);
 
-        $plugin = new class extends PluginTriggerLaunched {
+        $plugin = new class ([
+            PluginTriggerLaunched::FIELD__TRIGGER => $trigger,
+            PluginTriggerLaunched::FIELD__ACTIVITY => new Activity([
+                Activity::FIELD__PARAMETERS => [
+                    'anchor' => [
+                        'name' => 'anchor',
+                        'value' => $anchor
+                    ]
+                ]
+            ])
+        ]) extends PluginTriggerLaunched {
             public array $sendingData = [];
-            protected function getSendingData($trigger, $response, $anchor, $currentEventAnchor)
+            protected function getSendingData($response, $currentEventAnchor)
             {
                 return $this->sendingData = [
-                    EventTriggerLaunched::FIELD__TRIGGER_NAME => $trigger->getName(),
+                    EventTriggerLaunched::FIELD__TRIGGER_NAME => $this->getTrigger()->getName(),
                     EventTriggerLaunched::FIELD__TRIGGER_RESPONSE => $response->__toArray(),
-                    EventTriggerLaunched::FIELD__ANCHOR => $anchor->__toArray(),
+                    EventTriggerLaunched::FIELD__ANCHOR => $this->getActivity()
+                        ->getParameterValue('anchor')
+                        ->__toArray(),
                     'anchor' => $currentEventAnchor->getId(),
                     'version' => '2.0',
                     'df_version' => getenv('DF__VERSION'),
@@ -255,7 +270,7 @@ class PluginTriggerLaunchedTest extends TestCase
             }
         };
 
-        $plugin(new Activity(), new Activity(), $trigger, $anchor, $triggerResponse);
+        $plugin($triggerResponse);
 
         $this->assertEquals([
             EventTriggerLaunched::FIELD__TRIGGER_NAME => $trigger->getName(),
@@ -268,25 +283,30 @@ class PluginTriggerLaunchedTest extends TestCase
         ], $plugin->sendingData);
     }
 
+    /**
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \extas\components\exceptions\MissedOrUnknown
+     * @throws \Exception
+     */
     public function testSuccessGetSendingData()
     {
         putenv('DF__APP_NAME=deflou');
         putenv('DF__VERSION=3.0');
 
-        $this->appRepo->create(new Application([
+        $this->createWithSnuffRepo('deflouApplicationRepository', new Application([
             Application::FIELD__NAME => 'deflou',
             Application::FIELD__SAMPLE_NAME => 'deflou',
         ]));
-        $this->activityRepo->create(new Activity([
+        $this->createWithSnuffRepo('deflouActivityRepository', new Activity([
             Activity::FIELD__NAME => 'trigger.launched_',
             Activity::FIELD__SAMPLE_NAME => 'trigger.launched',
             Activity::FIELD__APPLICATION_NAME => 'deflou',
             Activity::FIELD__TYPE => Activity::TYPE__EVENT
         ]));
-        $this->playerRepo->create(new Player([
+        $this->createWithSnuffRepo('playerRepository', new Player([
             Player::FIELD__NAME => 'test_player'
         ]));
-        $this->anchorRepo->create(new Anchor([
+        $this->createWithSnuffRepo('anchorRepository', new Anchor([
             Anchor::FIELD__ID => 'test_anchor',
             Anchor::FIELD__EVENT_NAME => 'trigger.launched_',
             Anchor::FIELD__PLAYER_NAME => 'test_player',
@@ -303,15 +323,25 @@ class PluginTriggerLaunchedTest extends TestCase
             Anchor::FIELD__ID => 'test'
         ]);
 
-        $plugin = new class extends PluginTriggerLaunched{
-            public function __invoke(IActivity $action, IActivity $event, ITrigger $trigger, IAnchor $anchor, ITriggerResponse $response): void
+        $plugin = new class ([
+            PluginTriggerLaunched::FIELD__TRIGGER => $trigger,
+            PluginTriggerLaunched::FIELD__ACTIVITY => new Activity([
+                Activity::FIELD__PARAMETERS => [
+                    'anchor' => [
+                        'name' => 'anchor',
+                        'value' => $anchor
+                    ]
+                ]
+            ])
+        ]) extends PluginTriggerLaunched{
+            public function __invoke(ITriggerResponse $response): void
             {
-                parent::__invoke($action, $event, $trigger, $anchor, $response); // TODO: Change the autogenerated stub
+                parent::__invoke($response);
                 throw new \Exception('Is ok');
             }
         };
 
         $this->expectExceptionMessage('Is ok');
-        $plugin(new Activity(), new Activity(), $trigger, $anchor, $triggerResponse);
+        $plugin($triggerResponse);
     }
 }

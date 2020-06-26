@@ -27,6 +27,6 @@ class ActionWithException extends TriggerAction
      */
     public function __invoke(IActivity $action, IActivity $event, ITrigger $trigger, IAnchor $anchor): ITriggerResponse
     {
-        throw new \Exception(static::EXCEPTION__MESSAGE);
+        throw new \Exception(static::EXCEPTION__MESSAGE, 400);
     }
 }

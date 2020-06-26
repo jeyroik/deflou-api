@@ -1,13 +1,12 @@
 <?php
 namespace deflou\components\plugins\api;
 
-use extas\components\jsonrpc\App;
 use extas\components\jsonrpc\Router;
 use extas\components\plugins\Plugin;
+use extas\interfaces\stages\IStageJsonRpcInit;
 use Psr\Http\Message\RequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
-use extas\interfaces\jsonrpc\IRequest;
-use extas\components\jsonrpc\Request as JsonRpcRequest;
+use Slim\App;
 
 /**
  * Class PluginRestTriggerRunRoute
@@ -15,28 +14,18 @@ use extas\components\jsonrpc\Request as JsonRpcRequest;
  * @package deflou\components\plugins\api
  * @author jeyroik <jeyroik@gmail.com>
  */
-class PluginRestTriggerRunRoute extends Plugin
+class PluginRestTriggerRunRoute extends Plugin implements IStageJsonRpcInit
 {
-    /**
-     * @param App $app
-     */
-    public function __invoke(App &$app)
+    public function __invoke(App &$app): void
     {
         $app->any('/new/event/{anchor}/', function (Request $request, Response $response, array $args) {
-            $router = new Router();
-            $data = $_REQUEST;
-            $jsonData = json_decode($request->getBody()->getContents(),true);
-            $jsonData = $jsonData ?: [];
-            $data = array_merge($data, $jsonData, $args);
+            $router = new Router([
+                Router::FIELD__PSR_REQUEST => $request,
+                Router::FIELD__PSR_RESPONSE => $response,
+                Router::FIELD__ARGUMENTS => $args
+            ]);
 
-            return $router->dispatch($request, $response, new JsonRpcRequest([
-                IRequest::FIELD__METHOD => 'trigger.event.create',
-                IRequest::FIELD__ID => '',
-                IRequest::FIELD__PARAMS => [
-                    IRequest::FIELD__PARAMS_DATA => $data
-                ],
-                IRequest::FIELD__PARAMS_FILTER => [],
-            ]));
+            return $router->dispatch();
         });
     }
 }

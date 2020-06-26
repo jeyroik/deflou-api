@@ -3,9 +3,10 @@
   "description": "API package for DeFlou",
   "require": {
     "jeyroik/extas-installer": "3.*",
-    "jeyroik/extas-jsonrpc": "3.*",
+    "jeyroik/extas-jsonrpc": "4.*",
     "jeyroik/extas-parsers": "0.*",
     "jeyroik/deflou-core": "0.*",
+    "jeyroik/extas-loggers": "0.*",
     "ramsey/uuid": "4.*",
     "guzzlehttp/guzzle": "6.*"
   },
@@ -13,7 +14,11 @@
     "phpunit/phpunit": "^9",
     "vlucas/phpdotenv": "^3.4",
     "phpstan/phpstan": "0.*",
-    "jeyroik/extas-snuffbox": "0.*"
+    "jeyroik/deflou-self": "0.*",
+    "jeyroik/extas-snuffbox": "0.*",
+    "jeyroik/extas-snuffbox-repositories": "0.*",
+    "jeyroik/extas-snuffbox-loggers": "0.*",
+    "jeyroik/extas-snuffbox-conditions": "0.*"
   },
   "autoload": {
     "psr-4": {
@@ -22,6 +27,7 @@
     }
   },
   "scripts": {
+    "up": "vendor/bin/extas init && vendor/bin/extas install",
     "test": "vendor/bin/phpunit --testdox --coverage-clover=coverage.xml --whitelist=src tests",
     "stan": "vendor/bin/phpstan analyse -l 5 src"
   }
