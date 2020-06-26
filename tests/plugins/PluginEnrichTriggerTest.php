@@ -105,7 +105,8 @@ class PluginEnrichTriggerTest extends TestCase
 
         $plugin = new PluginTriggerEnrich([
             PluginTriggerEnrich::FIELD__ACTIVITY => $event,
-            PluginTriggerEnrich::FIELD__PSR_REQUEST => $this->getPsrRequest('.applicable.trigger')
+            PluginTriggerEnrich::FIELD__PSR_REQUEST => $this->getPsrRequest('.applicable.trigger'),
+            PluginTriggerEnrich::FIELD__PSR_RESPONSE => $this->getPsrResponse()
         ]);
         $plugin($trigger);
 

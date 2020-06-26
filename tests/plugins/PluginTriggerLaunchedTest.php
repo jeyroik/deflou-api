@@ -70,7 +70,8 @@ class PluginTriggerLaunchedTest extends TestCase
         $plugin(new TriggerResponse());
         $this->assertArrayHasKey('warning', BufferLogger::$log);
         $this->assertTrue(
-            in_array('Missed or unknown current instance application ""', BufferLogger::$log['warning'])
+            in_array('Missed or unknown current instance application ""', BufferLogger::$log['warning']),
+            print_r(BufferLogger::$log, true)
         );
     }
 
@@ -94,7 +95,8 @@ class PluginTriggerLaunchedTest extends TestCase
             in_array(
                 'Missed or unknown event "trigger.launched" for the current instance',
                 BufferLogger::$log['warning']
-            )
+            ),
+            print_r(BufferLogger::$log, true)
         );
     }
 
@@ -128,7 +130,8 @@ class PluginTriggerLaunchedTest extends TestCase
             in_array(
                 'Missed anchor for a trigger.launched event',
                 BufferLogger::$log['warning']
-            )
+            ),
+            print_r(BufferLogger::$log, true)
         );
     }
 
